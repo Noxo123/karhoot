@@ -7,7 +7,7 @@ export const authRouter = Router();
 const registerSchema = z.object({ email:z.string().email(), username:z.string().min(3).max(24).regex(/^[a-zA-Z0-9_ -]+$/), password:z.string().min(6).max(100), role:z.enum(['student','teacher']).default('student') });
 
 function publicUser(id) {
-  return db.prepare('SELECT id,email,username,role,avatar,avatar_config,xp,level FROM users WHERE id=?').get(id);
+  return db.prepare('SELECT id,email,username,role,avatar,avatar_config,coins,xp,level FROM users WHERE id=?').get(id);
 }
 
 authRouter.post('/register', async (req,res) => {
@@ -24,7 +24,7 @@ authRouter.post('/register', async (req,res) => {
 authRouter.post('/login', async (req,res) => {
   const { email, password } = req.body || {}; const user = db.prepare('SELECT * FROM users WHERE email=?').get(String(email || '').toLowerCase());
   if (!user || !(await verifyPassword(String(password || ''), user.password_hash))) return res.status(401).json({ error:'Email ou mot de passe incorrect' });
-  delete user.password_hash; res.json({ user: publicUser(user.id), token: signUser(user) });
+  res.json({ user: publicUser(user.id), token: signUser(user) });
 });
 
 authRouter.get('/me', requireAuth, (req,res) => {
