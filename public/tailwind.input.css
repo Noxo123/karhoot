@@ -1,0 +1,6 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: Inter, ui-sans-serif, system-ui, sans-serif;
+  --shadow-glow: 0 20px 60px rgba(99, 102, 241, .25);
+}
