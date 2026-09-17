@@ -66,7 +66,7 @@ gameRouter.post('/:code/join', requireAuth, (req,res) => {
   const game = getGame(req.params.code);
   if (!game) return res.status(404).json({ error:'Partie introuvable' });
   if (game.status !== 'lobby') return res.status(409).json({ error:'Cette partie a déjà commencé' });
-  db.prepare(`INSERT INTO live_players(game_id,user_id) VALUES(?,?,?) ON CONFLICT(game_id,user_id) DO UPDATE SET connected=1`).run(game.id, req.user.id);
+  db.prepare(`INSERT INTO live_players(game_id,user_id) VALUES(?,?) ON CONFLICT(game_id,user_id) DO UPDATE SET connected=1`).run(game.id, req.user.id);
   res.json({ gameId:game.id, roomCode:game.room_code, players:publicPlayers(game.id) });
 });
 
