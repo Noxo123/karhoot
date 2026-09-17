@@ -6,7 +6,7 @@ import { requireAuth, requireRole } from '../auth.js';
 export const gameRouter = Router();
 const makeRoom = () => crypto.randomBytes(3).toString('hex').toUpperCase();
 const getGame = (code) => db.prepare(`SELECT g.*, q.title, q.description FROM live_games g JOIN quizzes q ON q.id=g.quiz_id WHERE g.room_code=?`).get(String(code || '').trim().toUpperCase());
-const publicPlayers = (gameId) => db.prepare(`SELECT p.user_id,u.username,u.avatar,p.score,p.connected FROM live_players p JOIN users u ON u.id=p.user_id WHERE p.game_id=? ORDER BY p.score DESC,u.username ASC`).all(gameId);
+const publicPlayers = (gameId) => db.prepare(`SELECT p.user_id,u.username,u.avatar,p.score,p.connected FROM live_players p JOIN users u ON u.id=p.user_id JOIN live_games g ON g.id=p.game_id WHERE p.game_id=? AND p.user_id<>g.host_id ORDER BY p.score DESC,u.username ASC`).all(gameId);
 
 function questionPayload(quizId, index) {
   const q = db.prepare('SELECT id,question,points,order_index FROM questions WHERE quiz_id=? ORDER BY order_index LIMIT 1 OFFSET ?').get(quizId, index);
@@ -66,6 +66,7 @@ gameRouter.post('/:code/join', requireAuth, (req,res) => {
   const game = getGame(req.params.code);
   if (!game) return res.status(404).json({ error:'Partie introuvable' });
   if (game.status !== 'lobby') return res.status(409).json({ error:'Cette partie a déjà commencé' });
+  if (game.host_id === req.user.id) return res.json({ gameId:game.id, roomCode:game.room_code, players:publicPlayers(game.id), host:true });
   db.prepare(`INSERT INTO live_players(game_id,user_id) VALUES(?,?) ON CONFLICT(game_id,user_id) DO UPDATE SET connected=1`).run(game.id, req.user.id);
   res.json({ gameId:game.id, roomCode:game.room_code, players:publicPlayers(game.id) });
 });
@@ -73,6 +74,7 @@ gameRouter.post('/:code/join', requireAuth, (req,res) => {
 gameRouter.post('/:code/answer', requireAuth, (req,res) => {
   const game = getGame(req.params.code);
   if (!game || game.status !== 'question') return res.status(409).json({ error:'Aucune question active' });
+  if (game.host_id === req.user.id) return res.status(403).json({ error:'Le professeur ne peut pas répondre comme joueur' });
   const player = db.prepare('SELECT 1 FROM live_players WHERE game_id=? AND user_id=?').get(game.id, req.user.id);
   if (!player) return res.status(403).json({ error:'Vous ne participez pas à cette partie' });
   const q = questionPayload(game.quiz_id, game.current_question);
