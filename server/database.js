@@ -1,6 +1,7 @@
 import Database from 'better-sqlite3';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { AVATAR_CATALOG } from './avatar-catalog.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const db = new Database(path.join(__dirname, '..', 'karhoot.db'));
@@ -29,7 +30,7 @@ export function initDatabase() {
     CREATE TABLE IF NOT EXISTS assignments (id INTEGER PRIMARY KEY AUTOINCREMENT, quiz_id INTEGER NOT NULL, class_id INTEGER NOT NULL, due_date TEXT, settings TEXT NOT NULL DEFAULT '{}', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(quiz_id) REFERENCES quizzes(id) ON DELETE CASCADE);
     CREATE TABLE IF NOT EXISTS submissions (id INTEGER PRIMARY KEY AUTOINCREMENT, assignment_id INTEGER NOT NULL, student_id INTEGER NOT NULL, score INTEGER NOT NULL DEFAULT 0, duration_ms INTEGER NOT NULL DEFAULT 0, completed_at TEXT, FOREIGN KEY(assignment_id) REFERENCES assignments(id) ON DELETE CASCADE, FOREIGN KEY(student_id) REFERENCES users(id) ON DELETE CASCADE);
     CREATE TABLE IF NOT EXISTS submission_answers (id INTEGER PRIMARY KEY AUTOINCREMENT, submission_id INTEGER NOT NULL, question_id INTEGER NOT NULL, answer_id INTEGER, is_correct INTEGER NOT NULL DEFAULT 0, response_time_ms INTEGER NOT NULL DEFAULT 0, FOREIGN KEY(submission_id) REFERENCES submissions(id) ON DELETE CASCADE, FOREIGN KEY(question_id) REFERENCES questions(id) ON DELETE CASCADE, FOREIGN KEY(answer_id) REFERENCES answers(id) ON DELETE SET NULL);
-    CREATE TABLE IF NOT EXISTS live_games (id INTEGER PRIMARY KEY AUTOINCREMENT, quiz_id INTEGER NOT NULL, host_id INTEGER NOT NULL, room_code TEXT NOT NULL UNIQUE, status TEXT NOT NULL DEFAULT 'lobby', current_question INTEGER NOT NULL DEFAULT -1, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(quiz_id) REFERENCES quizzes(id) ON DELETE CASCADE, FOREIGN KEY(host_id) REFERENCES users(id) ON DELETE CASCADE);
+    CREATE TABLE IF NOT EXISTS live_games (id INTEGER PRIMARY KEY AUTOINCREMENT, quiz_id INTEGER NOT NULL, host_id INTEGER NOT NULL, room_code TEXT NOT NULL UNIQUE, status TEXT NOT NULL DEFAULT 'lobby', current_question INTEGER NOT NULL DEFAULT -1, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(quiz_id) REFERENCES quizzes(id) ON DELETE CASCADE);
     CREATE TABLE IF NOT EXISTS live_players (game_id INTEGER NOT NULL, user_id INTEGER NOT NULL, score INTEGER NOT NULL DEFAULT 0, connected INTEGER NOT NULL DEFAULT 1, PRIMARY KEY(game_id,user_id), FOREIGN KEY(game_id) REFERENCES live_games(id) ON DELETE CASCADE, FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE);
     CREATE TABLE IF NOT EXISTS xp_transactions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, amount INTEGER NOT NULL, reason TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE);
     CREATE TABLE IF NOT EXISTS badges (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE, description TEXT NOT NULL, icon TEXT NOT NULL);
@@ -44,11 +45,7 @@ export function initDatabase() {
   db.prepare("UPDATE users SET avatar='toon-head' WHERE avatar IN ('lorelei','adventurer','bottts','pixel-art','thumbs','avataaars','fun-emoji','bottts-neutral','croodles','voxel-art')").run();
   db.prepare("DELETE FROM user_avatar_items WHERE item_id IN (SELECT id FROM avatar_items WHERE style != 'toon-head')").run();
   db.prepare("DELETE FROM avatar_items WHERE style != 'toon-head'").run();
-  db.prepare("UPDATE avatar_items SET category='style' WHERE style='toon-head' AND category NOT IN ('character','style')").run();
   db.prepare("INSERT OR IGNORE INTO badges(name,description,icon) VALUES ('Premier pas','Terminer son premier quiz','🚀'),('Série de feu','Réussir 5 réponses consécutives','🔥'),('Champion','Gagner une partie live','🏆')").run();
-
-  const { AVATAR_CATALOG } = await import('./avatar-catalog.js');
   const insert = db.prepare('INSERT OR IGNORE INTO avatar_items(slug,name,category,style,price,description,icon) VALUES (?,?,?,?,?,?,?)');
   db.transaction(() => AVATAR_CATALOG.forEach(([slug,name,category,style,price,description,icon]) => insert.run(slug,name,category,style,price,description,icon)))();
-  db.prepare("UPDATE users SET coins=100 WHERE coins IS NULL").run();
 }
