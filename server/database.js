@@ -17,7 +17,7 @@ export function initDatabase() {
       id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT NOT NULL UNIQUE,
       password_hash TEXT NOT NULL, username TEXT NOT NULL UNIQUE,
       role TEXT NOT NULL DEFAULT 'student' CHECK(role IN ('student','teacher','admin')),
-      avatar TEXT NOT NULL DEFAULT 'lorelei', xp INTEGER NOT NULL DEFAULT 0,
+      avatar TEXT NOT NULL DEFAULT 'toon-head', xp INTEGER NOT NULL DEFAULT 0,
       level INTEGER NOT NULL DEFAULT 1, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
@@ -26,7 +26,7 @@ export function initDatabase() {
     CREATE TABLE IF NOT EXISTS quizzes (id INTEGER PRIMARY KEY AUTOINCREMENT, author_id INTEGER NOT NULL, title TEXT NOT NULL, description TEXT DEFAULT '', visibility TEXT NOT NULL DEFAULT 'private', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(author_id) REFERENCES users(id) ON DELETE CASCADE);
     CREATE TABLE IF NOT EXISTS questions (id INTEGER PRIMARY KEY AUTOINCREMENT, quiz_id INTEGER NOT NULL, question TEXT NOT NULL, points INTEGER NOT NULL DEFAULT 100, order_index INTEGER NOT NULL, FOREIGN KEY(quiz_id) REFERENCES quizzes(id) ON DELETE CASCADE);
     CREATE TABLE IF NOT EXISTS answers (id INTEGER PRIMARY KEY AUTOINCREMENT, question_id INTEGER NOT NULL, answer TEXT NOT NULL, is_correct INTEGER NOT NULL DEFAULT 0, order_index INTEGER NOT NULL, FOREIGN KEY(question_id) REFERENCES questions(id) ON DELETE CASCADE);
-    CREATE TABLE IF NOT EXISTS assignments (id INTEGER PRIMARY KEY AUTOINCREMENT, quiz_id INTEGER NOT NULL, class_id INTEGER NOT NULL, due_date TEXT, settings TEXT NOT NULL DEFAULT '{}', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(quiz_id) REFERENCES quizzes(id) ON DELETE CASCADE, FOREIGN KEY(class_id) REFERENCES classes(id) ON DELETE CASCADE);
+    CREATE TABLE IF NOT EXISTS assignments (id INTEGER PRIMARY KEY AUTOINCREMENT, quiz_id INTEGER NOT NULL, class_id INTEGER NOT NULL, due_date TEXT, settings TEXT NOT NULL DEFAULT '{}', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(quiz_id) REFERENCES quizzes(id) ON DELETE CASCADE);
     CREATE TABLE IF NOT EXISTS submissions (id INTEGER PRIMARY KEY AUTOINCREMENT, assignment_id INTEGER NOT NULL, student_id INTEGER NOT NULL, score INTEGER NOT NULL DEFAULT 0, duration_ms INTEGER NOT NULL DEFAULT 0, completed_at TEXT, FOREIGN KEY(assignment_id) REFERENCES assignments(id) ON DELETE CASCADE, FOREIGN KEY(student_id) REFERENCES users(id) ON DELETE CASCADE);
     CREATE TABLE IF NOT EXISTS submission_answers (id INTEGER PRIMARY KEY AUTOINCREMENT, submission_id INTEGER NOT NULL, question_id INTEGER NOT NULL, answer_id INTEGER, is_correct INTEGER NOT NULL DEFAULT 0, response_time_ms INTEGER NOT NULL DEFAULT 0, FOREIGN KEY(submission_id) REFERENCES submissions(id) ON DELETE CASCADE, FOREIGN KEY(question_id) REFERENCES questions(id) ON DELETE CASCADE, FOREIGN KEY(answer_id) REFERENCES answers(id) ON DELETE SET NULL);
     CREATE TABLE IF NOT EXISTS live_games (id INTEGER PRIMARY KEY AUTOINCREMENT, quiz_id INTEGER NOT NULL, host_id INTEGER NOT NULL, room_code TEXT NOT NULL UNIQUE, status TEXT NOT NULL DEFAULT 'lobby', current_question INTEGER NOT NULL DEFAULT -1, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(quiz_id) REFERENCES quizzes(id) ON DELETE CASCADE, FOREIGN KEY(host_id) REFERENCES users(id) ON DELETE CASCADE);
@@ -38,25 +38,17 @@ export function initDatabase() {
     CREATE TABLE IF NOT EXISTS user_avatar_items (user_id INTEGER NOT NULL, item_id INTEGER NOT NULL, purchased_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY(user_id,item_id), FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE, FOREIGN KEY(item_id) REFERENCES avatar_items(id) ON DELETE CASCADE);
   `);
   addColumn("ALTER TABLE users ADD COLUMN avatar_config TEXT NOT NULL DEFAULT '{}'");
-  addColumn("ALTER TABLE users ADD COLUMN coins INTEGER NOT NULL DEFAULT 500");
+  addColumn("ALTER TABLE users ADD COLUMN coins INTEGER NOT NULL DEFAULT 100");
+  addColumn("ALTER TABLE avatar_items ADD COLUMN svg_content TEXT NOT NULL DEFAULT ''");
+  addColumn("ALTER TABLE avatar_items ADD COLUMN creator_id INTEGER");
+  db.prepare("UPDATE users SET avatar='toon-head' WHERE avatar IN ('lorelei','adventurer','bottts','pixel-art','thumbs','avataaars','fun-emoji','bottts-neutral','croodles','voxel-art')").run();
+  db.prepare("DELETE FROM user_avatar_items WHERE item_id IN (SELECT id FROM avatar_items WHERE style != 'toon-head')").run();
+  db.prepare("DELETE FROM avatar_items WHERE style != 'toon-head'").run();
+  db.prepare("UPDATE avatar_items SET category='style' WHERE style='toon-head' AND category NOT IN ('character','style')").run();
   db.prepare("INSERT OR IGNORE INTO badges(name,description,icon) VALUES ('Premier pas','Terminer son premier quiz','🚀'),('Série de feu','Réussir 5 réponses consécutives','🔥'),('Champion','Gagner une partie live','🏆')").run();
 
-  const items = [
-    ['lorelei-default','Lumière','character','lorelei',0,'Personnage de départ','✨'],
-    ['adventurer','Aventurier','character','adventurer',150,'Un personnage plein d’énergie','🧭'],
-    ['bottts','Bot Karhoot','character','bottts',250,'Personnage robotique','🤖'],
-    ['pixel-hero','Pixel Hero','character','pixel-art',350,'Style pixel rétro','👾'],
-    ['thumbs','Thumbs','character','thumbs',200,'Avatar minimaliste','👍'],
-    ['avataaars','Karhoot Hero','character','avataaars',450,'Personnage personnalisable avec cheveux, yeux, bouche et vêtements.','🧑'],
-    ['neon','Néon','background','lorelei',100,'Fond violet néon','💜'],
-    ['midnight','Midnight','background','lorelei',100,'Fond noir premium','🌑'],
-    ['snow','Snow','background','lorelei',100,'Fond blanc glacé','❄️'],
-    ['violet-fit','Violet Fit','outfit','avataaars',300,'Tenue violette Karhoot','🟣'],
-    ['black-fit','Black Fit','outfit','avataaars',300,'Tenue noire Karhoot','⚫'],
-    ['white-fit','White Fit','outfit','avataaars',300,'Tenue blanche Karhoot','⚪']
-  ];
+  const { AVATAR_CATALOG } = await import('./avatar-catalog.js');
   const insert = db.prepare('INSERT OR IGNORE INTO avatar_items(slug,name,category,style,price,description,icon) VALUES (?,?,?,?,?,?,?)');
-  db.transaction(() => items.forEach(item => insert.run(...item)))();
-  // Existing installations keep their rows; normalize the outfit style for the real clothing presets.
-  db.prepare("UPDATE avatar_items SET style='avataaars' WHERE slug IN ('violet-fit','black-fit','white-fit')").run();
+  db.transaction(() => AVATAR_CATALOG.forEach(([slug,name,category,style,price,description,icon]) => insert.run(slug,name,category,style,price,description,icon)))();
+  db.prepare("UPDATE users SET coins=100 WHERE coins IS NULL").run();
 }
