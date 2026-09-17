@@ -22,7 +22,7 @@ export function initDatabase() {
       updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
     CREATE TABLE IF NOT EXISTS classes (id INTEGER PRIMARY KEY AUTOINCREMENT, teacher_id INTEGER NOT NULL, name TEXT NOT NULL, code TEXT NOT NULL UNIQUE, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(teacher_id) REFERENCES users(id) ON DELETE CASCADE);
-    CREATE TABLE IF NOT EXISTS class_members (class_id INTEGER NOT NULL, user_id INTEGER NOT NULL, joined_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY(class_id,user_id), FOREIGN KEY(class_id) REFERENCES classes(id) ON DELETE CASCADE, FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE);
+    CREATE TABLE IF NOT EXISTS class_members (class_id INTEGER NOT NULL, user_id INTEGER NOT NULL, joined_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY(class_id,user_id), FOREIGN KEY(class_id) REFERENCES classes(id) ON DELETE CASCADE);
     CREATE TABLE IF NOT EXISTS quizzes (id INTEGER PRIMARY KEY AUTOINCREMENT, author_id INTEGER NOT NULL, title TEXT NOT NULL, description TEXT DEFAULT '', visibility TEXT NOT NULL DEFAULT 'private', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(author_id) REFERENCES users(id) ON DELETE CASCADE);
     CREATE TABLE IF NOT EXISTS questions (id INTEGER PRIMARY KEY AUTOINCREMENT, quiz_id INTEGER NOT NULL, question TEXT NOT NULL, points INTEGER NOT NULL DEFAULT 100, order_index INTEGER NOT NULL, FOREIGN KEY(quiz_id) REFERENCES quizzes(id) ON DELETE CASCADE);
     CREATE TABLE IF NOT EXISTS answers (id INTEGER PRIMARY KEY AUTOINCREMENT, question_id INTEGER NOT NULL, answer TEXT NOT NULL, is_correct INTEGER NOT NULL DEFAULT 0, order_index INTEGER NOT NULL, FOREIGN KEY(question_id) REFERENCES questions(id) ON DELETE CASCADE);
@@ -40,9 +40,23 @@ export function initDatabase() {
   addColumn("ALTER TABLE users ADD COLUMN avatar_config TEXT NOT NULL DEFAULT '{}'");
   addColumn("ALTER TABLE users ADD COLUMN coins INTEGER NOT NULL DEFAULT 500");
   db.prepare("INSERT OR IGNORE INTO badges(name,description,icon) VALUES ('Premier pas','Terminer son premier quiz','🚀'),('Série de feu','Réussir 5 réponses consécutives','🔥'),('Champion','Gagner une partie live','🏆')").run();
+
   const items = [
-    ['lorelei-default','Lumière','character','lorelei',0,'Personnage de départ','✨'],['adventurer','Aventurier','character','adventurer',150,'Un personnage plein d’énergie','🧭'],['bottts','Bot Karhoot','character','bottts',250,'Personnage robotique','🤖'],['pixel-hero','Pixel Hero','character','pixel-art',350,'Style pixel rétro','👾'],['thumbs','Thumbs','character','thumbs',200,'Avatar minimaliste','👍'],['neon','Néon','background','lorelei',100,'Fond violet néon','💜'],['midnight','Midnight','background','lorelei',100,'Fond noir premium','🌑'],['snow','Snow','background','lorelei',100,'Fond blanc glacé','❄️'],['violet-fit','Violet Fit','outfit','lorelei',300,'Tenue violette Karhoot','🟣'],['black-fit','Black Fit','outfit','lorelei',300,'Tenue noire Karhoot','⚫'],['white-fit','White Fit','outfit','lorelei',300,'Tenue blanche Karhoot','⚪']
+    ['lorelei-default','Lumière','character','lorelei',0,'Personnage de départ','✨'],
+    ['adventurer','Aventurier','character','adventurer',150,'Un personnage plein d’énergie','🧭'],
+    ['bottts','Bot Karhoot','character','bottts',250,'Personnage robotique','🤖'],
+    ['pixel-hero','Pixel Hero','character','pixel-art',350,'Style pixel rétro','👾'],
+    ['thumbs','Thumbs','character','thumbs',200,'Avatar minimaliste','👍'],
+    ['avataaars','Karhoot Hero','character','avataaars',450,'Personnage personnalisable avec cheveux, yeux, bouche et vêtements.','🧑'],
+    ['neon','Néon','background','lorelei',100,'Fond violet néon','💜'],
+    ['midnight','Midnight','background','lorelei',100,'Fond noir premium','🌑'],
+    ['snow','Snow','background','lorelei',100,'Fond blanc glacé','❄️'],
+    ['violet-fit','Violet Fit','outfit','avataaars',300,'Tenue violette Karhoot','🟣'],
+    ['black-fit','Black Fit','outfit','avataaars',300,'Tenue noire Karhoot','⚫'],
+    ['white-fit','White Fit','outfit','avataaars',300,'Tenue blanche Karhoot','⚪']
   ];
   const insert = db.prepare('INSERT OR IGNORE INTO avatar_items(slug,name,category,style,price,description,icon) VALUES (?,?,?,?,?,?,?)');
   db.transaction(() => items.forEach(item => insert.run(...item)))();
+  // Existing installations keep their rows; normalize the outfit style for the real clothing presets.
+  db.prepare("UPDATE avatar_items SET style='avataaars' WHERE slug IN ('violet-fit','black-fit','white-fit')").run();
 }
