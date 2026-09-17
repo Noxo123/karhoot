@@ -29,7 +29,7 @@ export function initDatabase() {
     CREATE TABLE IF NOT EXISTS answers (id INTEGER PRIMARY KEY AUTOINCREMENT, question_id INTEGER NOT NULL, answer TEXT NOT NULL, is_correct INTEGER NOT NULL DEFAULT 0, order_index INTEGER NOT NULL, FOREIGN KEY(question_id) REFERENCES questions(id) ON DELETE CASCADE);
     CREATE TABLE IF NOT EXISTS assignments (id INTEGER PRIMARY KEY AUTOINCREMENT, quiz_id INTEGER NOT NULL, class_id INTEGER NOT NULL, due_date TEXT, settings TEXT NOT NULL DEFAULT '{}', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(quiz_id) REFERENCES quizzes(id) ON DELETE CASCADE);
     CREATE TABLE IF NOT EXISTS submissions (id INTEGER PRIMARY KEY AUTOINCREMENT, assignment_id INTEGER NOT NULL, student_id INTEGER NOT NULL, score INTEGER NOT NULL DEFAULT 0, duration_ms INTEGER NOT NULL DEFAULT 0, completed_at TEXT, FOREIGN KEY(assignment_id) REFERENCES assignments(id) ON DELETE CASCADE);
-    CREATE TABLE IF NOT EXISTS submission_answers (id INTEGER PRIMARY KEY AUTOINCREMENT, submission_id INTEGER NOT NULL, question_id INTEGER NOT NULL, answer_id INTEGER, is_correct INTEGER NOT NULL DEFAULT 0, response_time_ms INTEGER NOT NULL DEFAULT 0, FOREIGN KEY(submission_id) REFERENCES submissions(id) ON DELETE CASCADE, FOREIGN KEY(question_id) REFERENCES questions(id) ON DELETE CASCADE, FOREIGN KEY(answer_id) REFERENCES answers(id) ON DELETE SET NULL);
+    CREATE TABLE IF NOT EXISTS submission_answers (id INTEGER PRIMARY KEY AUTOINCREMENT, submission_id INTEGER NOT NULL, question_id INTEGER NOT NULL, answer_id INTEGER, is_correct INTEGER NOT NULL DEFAULT 0, response_time_ms INTEGER NOT NULL DEFAULT 0, FOREIGN KEY(submission_id) REFERENCES submissions(id) ON DELETE CASCADE);
     CREATE TABLE IF NOT EXISTS live_games (id INTEGER PRIMARY KEY AUTOINCREMENT, quiz_id INTEGER NOT NULL, host_id INTEGER NOT NULL, room_code TEXT NOT NULL UNIQUE, status TEXT NOT NULL DEFAULT 'lobby', current_question INTEGER NOT NULL DEFAULT -1, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(quiz_id) REFERENCES quizzes(id) ON DELETE CASCADE);
     CREATE TABLE IF NOT EXISTS live_players (game_id INTEGER NOT NULL, user_id INTEGER NOT NULL, score INTEGER NOT NULL DEFAULT 0, connected INTEGER NOT NULL DEFAULT 1, PRIMARY KEY(game_id,user_id), FOREIGN KEY(game_id) REFERENCES users(id) ON DELETE CASCADE);
     CREATE TABLE IF NOT EXISTS xp_transactions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, amount INTEGER NOT NULL, reason TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE);
@@ -42,6 +42,11 @@ export function initDatabase() {
   addColumn("ALTER TABLE users ADD COLUMN coins INTEGER NOT NULL DEFAULT 100");
   addColumn("ALTER TABLE avatar_items ADD COLUMN svg_content TEXT NOT NULL DEFAULT ''");
   addColumn("ALTER TABLE avatar_items ADD COLUMN creator_id INTEGER");
+  addColumn("ALTER TABLE avatar_items ADD COLUMN anchor TEXT NOT NULL DEFAULT 'center'");
+  addColumn("ALTER TABLE avatar_items ADD COLUMN pos_x REAL NOT NULL DEFAULT 50");
+  addColumn("ALTER TABLE avatar_items ADD COLUMN pos_y REAL NOT NULL DEFAULT 50");
+  addColumn("ALTER TABLE avatar_items ADD COLUMN scale REAL NOT NULL DEFAULT 100");
+  addColumn("ALTER TABLE avatar_items ADD COLUMN rotation REAL NOT NULL DEFAULT 0");
   db.prepare("UPDATE users SET avatar='toon-head' WHERE avatar IN ('lorelei','adventurer','bottts','pixel-art','thumbs','avataaars','fun-emoji','bottts-neutral','croodles','voxel-art')").run();
   const oldStyles=['lorelei','adventurer','bottts','pixel-art','thumbs','avataaars','fun-emoji','bottts-neutral','croodles','voxel-art'];
   const marks=oldStyles.map(()=>'?').join(',');
