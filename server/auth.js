@@ -10,7 +10,10 @@ export function requireAuth(req, res, next) {
   try {
     const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '');
     if (!token) return res.status(401).json({ error: 'Authentification requise' });
-    req.user = verifyToken(token);
+    const payload = verifyToken(token);
+    const id = payload.id ?? payload.userId;
+    if (!id) return res.status(401).json({ error: 'Session invalide: identifiant utilisateur manquant' });
+    req.user = { ...payload, id };
     next();
   } catch { res.status(401).json({ error: 'Session invalide ou expirée' }); }
 }
