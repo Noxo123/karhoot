@@ -14,6 +14,7 @@ import { classRouter } from './routes/classes.js';
 import { gameRouter } from './routes/games.js';
 import { assignmentRouter } from './routes/assignments.js';
 import { avatarRouter } from './routes/avatars.js';
+import { teacherAdminRouter } from './routes/teacher-admin.js';
 import { registerRealtime } from './realtime.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -35,7 +36,8 @@ app.use('/api/classes', classRouter);
 app.use('/api/games', gameRouter);
 app.use('/api/assignments', assignmentRouter);
 app.use('/api/avatars', avatarRouter);
-app.get('/api/health', (_req,res) => res.json({ ok:true, name:'Karhoot API', version:'1.3.1', realtime:true, avatars:'dicebear' }));
+app.use('/api/teacher-admin', teacherAdminRouter);
+app.get('/api/health', (_req,res) => res.json({ ok:true, name:'Karhoot API', version:'1.3.1', realtime:true, avatars:'toon-head' }));
 app.use(express.static(path.join(__dirname, '..', 'public')));
 app.use((_req,res) => res.sendFile(path.join(__dirname, '..', 'public', 'index.html')));
 
