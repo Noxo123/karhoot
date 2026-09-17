@@ -2,7 +2,6 @@
 // Add future characters/cosmetics here; database initialization upserts them automatically.
 
 export const AVATAR_CATALOG = [
-  // Characters / DiceBear styles
   ['lorelei-default', 'Lumière', 'character', 'lorelei', 0, 'Personnage de départ', '✨'],
   ['adventurer', 'Aventurier', 'character', 'adventurer', 150, 'Avatar aventurier', '🧭'],
   ['bottts', 'Bot Karhoot', 'character', 'bottts', 250, 'Avatar robotique', '🤖'],
@@ -14,50 +13,40 @@ export const AVATAR_CATALOG = [
   ['croodles', 'Croodles', 'character', 'croodles', 300, 'Avatar dessiné', '✏️'],
   ['voxel-art', 'Voxel', 'character', 'voxel-art', 500, 'Avatar 3D voxel', '🧊'],
 
-  // Toon Head — every component variant is independently purchasable.
   ['toon-beard-chin', 'Barbe menton', 'cosmetic', 'toon-head', 40, 'Barbe Toon Head', '🧔', 'beardVariant', 'chin'],
   ['toon-beard-chin-moustache', 'Barbe + moustache', 'cosmetic', 'toon-head', 60, 'Barbe avec moustache', '🧔', 'beardVariant', 'chinMoustache'],
   ['toon-beard-full', 'Barbe complète', 'cosmetic', 'toon-head', 80, 'Barbe complète', '🧔', 'beardVariant', 'fullBeard'],
   ['toon-beard-long', 'Longue barbe', 'cosmetic', 'toon-head', 100, 'Longue barbe', '🧔', 'beardVariant', 'longBeard'],
   ['toon-beard-twirl', 'Moustache royale', 'cosmetic', 'toon-head', 120, 'Moustache torsadée', '🥸', 'beardVariant', 'moustacheTwirl'],
-
   ['toon-clothes-dress', 'Robe', 'cosmetic', 'toon-head', 100, 'Robe Toon Head', '👗', 'clothesVariant', 'dress'],
   ['toon-clothes-jacket', 'Veste ouverte', 'cosmetic', 'toon-head', 100, 'Veste ouverte', '🧥', 'clothesVariant', 'openJacket'],
   ['toon-clothes-shirt', 'Chemise', 'cosmetic', 'toon-head', 80, 'Chemise', '👔', 'clothesVariant', 'shirt'],
   ['toon-clothes-tshirt', 'T-shirt', 'cosmetic', 'toon-head', 60, 'T-shirt', '👕', 'clothesVariant', 'tShirt'],
   ['toon-clothes-turtleneck', 'Col roulé', 'cosmetic', 'toon-head', 90, 'Pull col roulé', '🧶', 'clothesVariant', 'turtleNeck'],
-
   ['toon-eyebrows-angry', 'Sourcils énervés', 'cosmetic', 'toon-head', 35, 'Expression énervée', '😠', 'eyebrowsVariant', 'angry'],
   ['toon-eyebrows-happy', 'Sourcils joyeux', 'cosmetic', 'toon-head', 35, 'Expression joyeuse', '😊', 'eyebrowsVariant', 'happy'],
   ['toon-eyebrows-neutral', 'Sourcils neutres', 'cosmetic', 'toon-head', 25, 'Expression neutre', '😐', 'eyebrowsVariant', 'neutral'],
   ['toon-eyebrows-raised', 'Sourcils levés', 'cosmetic', 'toon-head', 35, 'Sourcils levés', '🤨', 'eyebrowsVariant', 'raised'],
   ['toon-eyebrows-sad', 'Sourcils tristes', 'cosmetic', 'toon-head', 35, 'Sourcils tristes', '😢', 'eyebrowsVariant', 'sad'],
-
   ['toon-eyes-bow', 'Yeux Bow', 'cosmetic', 'toon-head', 40, 'Yeux stylisés', '👀', 'eyesVariant', 'bow'],
   ['toon-eyes-happy', 'Yeux joyeux', 'cosmetic', 'toon-head', 40, 'Yeux joyeux', '😊', 'eyesVariant', 'happy'],
   ['toon-eyes-humble', 'Yeux doux', 'cosmetic', 'toon-head', 40, 'Yeux doux', '🥹', 'eyesVariant', 'humble'],
   ['toon-eyes-wide', 'Grands yeux', 'cosmetic', 'toon-head', 45, 'Yeux grands ouverts', '👁️', 'eyesVariant', 'wide'],
   ['toon-eyes-wink', 'Clin d’œil', 'cosmetic', 'toon-head', 60, 'Clin d’œil', '😉', 'eyesVariant', 'wink'],
-
   ['toon-hair-bun', 'Chignon', 'cosmetic', 'toon-head', 70, 'Coiffure chignon', '💇', 'hairVariant', 'bun'],
   ['toon-hair-side', 'Mèche sur le côté', 'cosmetic', 'toon-head', 70, 'Coiffure latérale', '💇', 'hairVariant', 'sideComed'],
   ['toon-hair-spiky', 'Cheveux hérissés', 'cosmetic', 'toon-head', 80, 'Coiffure hérissée', '⚡', 'hairVariant', 'spiky'],
   ['toon-hair-undercut', 'Undercut', 'cosmetic', 'toon-head', 90, 'Coiffure undercut', '💈', 'hairVariant', 'undercut'],
-
-  ['toon-head', 'Tête Toon', 'cosmetic', 'toon-head', 25, 'Forme de tête Toon Head', '🙂', 'headVariant', 'head'],
-
+  ['toon-head-shape', 'Tête Toon', 'cosmetic', 'toon-head', 25, 'Forme de tête Toon Head', '🙂', 'headVariant', 'head'],
   ['toon-mouth-agape', 'Bouche ouverte', 'cosmetic', 'toon-head', 40, 'Bouche ouverte', '😮', 'mouthVariant', 'agape'],
   ['toon-mouth-angry', 'Bouche énervée', 'cosmetic', 'toon-head', 40, 'Bouche énervée', '😠', 'mouthVariant', 'angry'],
   ['toon-mouth-laugh', 'Rire', 'cosmetic', 'toon-head', 45, 'Expression de rire', '😂', 'mouthVariant', 'laugh'],
   ['toon-mouth-sad', 'Bouche triste', 'cosmetic', 'toon-head', 40, 'Expression triste', '🙁', 'mouthVariant', 'sad'],
   ['toon-mouth-smile', 'Sourire', 'cosmetic', 'toon-head', 30, 'Sourire', '😁', 'mouthVariant', 'smile'],
-
   ['toon-rear-long-straight', 'Cheveux longs lisses', 'cosmetic', 'toon-head', 90, 'Cheveux longs', '💇‍♀️', 'rearHairVariant', 'longStraight'],
   ['toon-rear-long-wavy', 'Cheveux longs ondulés', 'cosmetic', 'toon-head', 100, 'Cheveux ondulés', '💇‍♀️', 'rearHairVariant', 'longWavy'],
   ['toon-rear-neck-high', 'Cheveux nuque haute', 'cosmetic', 'toon-head', 80, 'Coiffure arrière', '💇', 'rearHairVariant', 'neckHigh'],
   ['toon-rear-shoulder-high', 'Cheveux épaules', 'cosmetic', 'toon-head', 100, 'Cheveux jusqu’aux épaules', '💇‍♀️', 'rearHairVariant', 'shoulderHigh'],
-
-  // Toon Head colors — all are shop items too.
   ['toon-clothes-black', 'Vêtements noir', 'cosmetic', 'toon-head', 50, 'Couleur de vêtements noire', '⚫', 'clothesColor', '151613'],
   ['toon-clothes-blue', 'Vêtements bleu', 'cosmetic', 'toon-head', 50, 'Couleur de vêtements bleue', '🔵', 'clothesColor', '0b3286'],
   ['toon-clothes-grey', 'Vêtements gris', 'cosmetic', 'toon-head', 50, 'Couleur de vêtements grise', '⚙️', 'clothesColor', '545454'],
@@ -82,8 +71,6 @@ export const AVATAR_CATALOG = [
   ['toon-stroke-pink', 'Contour rose', 'cosmetic', 'toon-head', 60, 'Contour rose', '🩷', 'strokeColor', 'ff8aab'],
   ['toon-stroke-gold', 'Contour doré', 'cosmetic', 'toon-head', 100, 'Contour doré', '✨', 'strokeColor', 'ffbe47'],
   ['toon-stroke-green', 'Contour vert', 'cosmetic', 'toon-head', 60, 'Contour vert', '🟢', 'strokeColor', '5bc971'],
-
-  // Karhoot backgrounds / outfits.
   ['neon', 'Néon', 'background', 'lorelei', 100, 'Fond violet néon', '💜'],
   ['midnight', 'Midnight', 'background', 'lorelei', 100, 'Fond noir premium', '🌑'],
   ['snow', 'Snow', 'background', 'lorelei', 100, 'Fond blanc glacé', '❄️'],
@@ -93,7 +80,5 @@ export const AVATAR_CATALOG = [
 ];
 
 export function catalogRows() {
-  return AVATAR_CATALOG.map(([slug, name, category, style, price, description, icon, optionKey = '', optionValue = '']) => ({
-    slug, name, category, style, price, description, icon, optionKey, optionValue
-  }));
+  return AVATAR_CATALOG.map(([slug, name, category, style, price, description, icon, optionKey = '', optionValue = '']) => ({ slug, name, category, style, price, description, icon, optionKey, optionValue }));
 }
