@@ -7,13 +7,17 @@ export const db = new Database(path.join(__dirname, '..', 'karhoot.db'));
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
 
+function addColumn(sql) {
+  try { db.exec(sql); } catch (error) { if (!String(error.message).includes('duplicate column name')) throw error; }
+}
+
 export function initDatabase() {
   db.exec(`
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT NOT NULL UNIQUE,
       password_hash TEXT NOT NULL, username TEXT NOT NULL UNIQUE,
       role TEXT NOT NULL DEFAULT 'student' CHECK(role IN ('student','teacher','admin')),
-      avatar TEXT NOT NULL DEFAULT 'astronaut', xp INTEGER NOT NULL DEFAULT 0,
+      avatar TEXT NOT NULL DEFAULT 'lorelei', xp INTEGER NOT NULL DEFAULT 0,
       level INTEGER NOT NULL DEFAULT 1, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
@@ -72,7 +76,38 @@ export function initDatabase() {
       reason TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
     );
     CREATE TABLE IF NOT EXISTS badges (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE, description TEXT NOT NULL, icon TEXT NOT NULL);
-    CREATE TABLE IF NOT EXISTS user_badges (user_id INTEGER NOT NULL, badge_id INTEGER NOT NULL, unlocked_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY(user_id,badge_id), FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE, FOREIGN KEY(badge_id) REFERENCES badges(id) ON DELETE CASCADE);
+    CREATE TABLE IF NOT EXISTS user_badges (user_id INTEGER NOT NULL, badge_id INTEGER NOT NULL, unlocked_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY(user_id,badge_id), FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE);
+    CREATE TABLE IF NOT EXISTS avatar_items (
+      id INTEGER PRIMARY KEY AUTOINCREMENT, slug TEXT NOT NULL UNIQUE, name TEXT NOT NULL,
+      category TEXT NOT NULL CHECK(category IN ('character','outfit','style','background')),
+      style TEXT NOT NULL, price INTEGER NOT NULL DEFAULT 0, description TEXT NOT NULL DEFAULT '',
+      icon TEXT NOT NULL DEFAULT '✨', active INTEGER NOT NULL DEFAULT 1
+    );
+    CREATE TABLE IF NOT EXISTS user_avatar_items (
+      user_id INTEGER NOT NULL, item_id INTEGER NOT NULL, purchased_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY(user_id,item_id), FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY(item_id) REFERENCES avatar_items(id) ON DELETE CASCADE
+    );
   `);
+
+  addColumn("ALTER TABLE users ADD COLUMN avatar_config TEXT NOT NULL DEFAULT '{}'");
+
   db.prepare("INSERT OR IGNORE INTO badges(name,description,icon) VALUES ('Premier pas','Terminer son premier quiz','🚀'),('Série de feu','Réussir 5 réponses consécutives','🔥'),('Champion','Gagner une partie live','🏆')").run();
+
+  const items = [
+    ['lorelei-default','Lumière','character','lorelei',0,'Personnage de départ','✨'],
+    ['adventurer','Aventurier','character','adventurer',150,'Un personnage plein d’énergie','🧭'],
+    ['bottts','Bot Karhoot','character','bottts',250,'Personnage robotique','🤖'],
+    ['pixel-hero','Pixel Hero','character','pixel-art',350,'Style pixel rétro','👾'],
+    ['thumbs','Thumbs','character','thumbs',200,'Avatar minimaliste','👍'],
+    ['neon','Néon','background','lorelei',100,'Fond violet néon','💜'],
+    ['midnight','Midnight','background','lorelei',100,'Fond noir premium','🌑'],
+    ['snow','Snow','background','lorelei',100,'Fond blanc glacé','❄️'],
+    ['violet-fit','Violet Fit','outfit','lorelei',300,'Tenue violette Karhoot','🟣'],
+    ['black-fit','Black Fit','outfit','lorelei',300,'Tenue noire Karhoot','⚫'],
+    ['white-fit','White Fit','outfit','lorelei',300,'Tenue blanche Karhoot','⚪']
+  ];
+  const insert = db.prepare('INSERT OR IGNORE INTO avatar_items(slug,name,category,style,price,description,icon) VALUES (?,?,?,?,?,?,?)');
+  const transaction = db.transaction(() => items.forEach(item => insert.run(...item)));
+  transaction();
 }
