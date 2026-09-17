@@ -1,11 +1,12 @@
 <!doctype html>
-<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Karhoot — Professeur</title><script src="https://cdn.tailwindcss.com"></script></head>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Karhoot — Professeur</title><link rel="stylesheet" href="/tailwind.css"></head>
 <body class="min-h-screen bg-slate-950 text-white">
 <header class="border-b border-white/10 bg-slate-950/80 backdrop-blur"><div class="max-w-7xl mx-auto px-5 py-4 flex items-center justify-between"><a href="/" class="font-black text-2xl">🎮 Karhoot</a><div class="flex items-center gap-4"><span id="hello" class="text-slate-300"></span><button onclick="logout()" class="text-slate-400 hover:text-white">Déconnexion</button></div></div></header>
 <main class="max-w-7xl mx-auto p-5 md:p-8">
 <div class="flex flex-col md:flex-row md:items-end justify-between gap-4"><div><p class="text-indigo-400 font-bold">TABLEAU DE BORD</p><h1 class="text-4xl font-black mt-1">Crée. Lance. Fais jouer. 🚀</h1><p class="text-slate-400 mt-2">Construis des quiz puis lance-les en direct avec tes élèves.</p></div><a href="/quiz-builder.html" class="px-5 py-3 rounded-2xl bg-indigo-500 hover:bg-indigo-400 font-bold">＋ Nouveau quiz</a></div>
 <section class="grid lg:grid-cols-3 gap-5 mt-8"><div class="lg:col-span-2 rounded-3xl border border-white/10 bg-white/5 p-6"><div class="flex justify-between items-center"><h2 class="text-xl font-bold">Mes quiz</h2><span id="quizCount" class="text-sm text-slate-500"></span></div><div id="quizzes" class="grid md:grid-cols-2 gap-4 mt-5"></div></div><div class="rounded-3xl border border-white/10 bg-white/5 p-6"><div class="flex justify-between"><h2 class="text-xl font-bold">Mes classes</h2><button onclick="createClass()" class="text-indigo-300">＋</button></div><div id="classes" class="space-y-3 mt-5"></div></div></section>
 </main>
+<script src="/js/teacher-nav.js"></script>
 <script>
 const token=localStorage.getItem('karhoot_token'),user=JSON.parse(localStorage.getItem('karhoot_user')||'{}');if(!token||!['teacher','admin'].includes(user.role))location.href='/login.html';document.getElementById('hello').textContent=user.username||'';
 const api=(u,o={})=>fetch(u,{...o,headers:{'Content-Type':'application/json',Authorization:'Bearer '+token,...(o.headers||{})}});const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
