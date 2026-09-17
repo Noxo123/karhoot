@@ -5,11 +5,12 @@ const secret = process.env.JWT_SECRET || 'karhoot-dev-secret-change-me';
 export async function hashPassword(password) { return bcrypt.hash(password, 12); }
 export async function verifyPassword(password, hash) { return bcrypt.compare(password, hash); }
 export function signUser(user) { return jwt.sign({ id: user.id, role: user.role, username: user.username }, secret, { expiresIn: '7d' }); }
+export function verifyToken(token) { return jwt.verify(token, secret); }
 export function requireAuth(req, res, next) {
   try {
     const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '');
     if (!token) return res.status(401).json({ error: 'Authentification requise' });
-    req.user = jwt.verify(token, secret);
+    req.user = verifyToken(token);
     next();
   } catch { res.status(401).json({ error: 'Session invalide ou expirée' }); }
 }
