@@ -15,7 +15,7 @@ authRouter.post('/register', async (req,res) => {
   const { email, username, password, role } = parsed.data;
   try {
     const hash = await hashPassword(password);
-    const result = db.prepare('INSERT INTO users(email,password_hash,username,role) VALUES (?,?,?,?)').run(email.toLowerCase(),hash,username,role);
+    const result = db.prepare('INSERT INTO users(email,password_hash,username,role,coins) VALUES (?,?,?,?,100)').run(email.toLowerCase(),hash,username,role);
     const user = publicUser(result.lastInsertRowid);
     res.status(201).json({ user, token: signUser(user) });
   } catch (e) { res.status(409).json({ error: e.code === 'SQLITE_CONSTRAINT_UNIQUE' ? 'Email ou pseudo déjà utilisé' : 'Inscription impossible' }); }
