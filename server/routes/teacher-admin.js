@@ -61,8 +61,12 @@ teacherAdminRouter.post('/catalog/items', (req,res) => {
   if(!parsed.data.svgContent && req.user.role !== 'admin') return res.status(403).json({error:'Un SVG personnalisé doit être validé par un administrateur'});
   let svg=parsed.data.svgContent;
   if(svg){
-    svg=svg.replace(/<script[\\s\\S]*?<\\/script>/gi,'').replace(/on[a-z]+\\s*=\\s*(["']).*?\\1/gi,'').replace(/javascript:/gi,'').replace(/<foreignObject[\\s\\S]*?<\\/foreignObject>/gi,'');
-    if(!/<svg[\\s>]/i.test(svg)) return res.status(400).json({error:'Le contenu doit être un SVG valide'});
+    svg=svg
+      .replace(/<script[\s\S]*?<\/script>/gi,'')
+      .replace(/on[a-z]+\s*=\s*(["']).*?\1/gi,'')
+      .replace(/javascript:/gi,'')
+      .replace(/<foreignObject[\s\S]*?<\/foreignObject>/gi,'');
+    if(!/<svg[\s>]/i.test(svg)) return res.status(400).json({error:'Le contenu doit être un SVG valide'});
   }
   try {
     const result=db.prepare('INSERT INTO avatar_items(slug,name,category,style,price,description,icon,svg_content,creator_id) VALUES(?,?,?,?,?,?,?,?,?)').run(parsed.data.slug,parsed.data.name,parsed.data.category,parsed.data.style,parsed.data.price,parsed.data.description,parsed.data.icon,svg,req.user.id);
