@@ -1,0 +1,21 @@
+{
+  "name": "karhoot",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Plateforme éducative ludique de quiz, devoirs et parties en temps réel.",
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch server/server.js",
+    "start": "node server/server.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "better-sqlite3": "^12.4.1",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.2.1",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "socket.io": "^4.8.1",
+    "zod": "^4.1.5"
+  }
+}
