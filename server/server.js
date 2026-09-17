@@ -7,6 +7,7 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { Server } from 'socket.io';
 import { initDatabase } from './database.js';
+import { seedAvatarCatalog } from './avatar-seed.js';
 import { authRouter } from './routes/auth.js';
 import { quizRouter } from './routes/quizzes.js';
 import { classRouter } from './routes/classes.js';
@@ -21,6 +22,8 @@ const httpServer = http.createServer(app);
 const io = new Server(httpServer, { cors: { origin: true, credentials: true } });
 
 initDatabase();
+const { db } = await import('./database.js');
+seedAvatarCatalog(db);
 app.disable('x-powered-by');
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(express.json({ limit: '1mb' }));
@@ -32,7 +35,7 @@ app.use('/api/classes', classRouter);
 app.use('/api/games', gameRouter);
 app.use('/api/assignments', assignmentRouter);
 app.use('/api/avatars', avatarRouter);
-app.get('/api/health', (_req,res) => res.json({ ok:true, name:'Karhoot API', version:'1.3.0', realtime:true, avatars:'dicebear' }));
+app.get('/api/health', (_req,res) => res.json({ ok:true, name:'Karhoot API', version:'1.3.1', realtime:true, avatars:'dicebear' }));
 app.use(express.static(path.join(__dirname, '..', 'public')));
 app.use((_req,res) => res.sendFile(path.join(__dirname, '..', 'public', 'index.html')));
 
