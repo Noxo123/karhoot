@@ -6,7 +6,34 @@ import { requireAuth, requireRole } from '../auth.js';
 export const gameRouter = Router();
 const makeRoom = () => crypto.randomBytes(3).toString('hex').toUpperCase();
 const getGame = (code) => db.prepare(`SELECT g.*, q.title, q.description FROM live_games g JOIN quizzes q ON q.id=g.quiz_id WHERE g.room_code=?`).get(String(code || '').trim().toUpperCase());
-const publicPlayers = (gameId) => db.prepare(`SELECT p.user_id,u.username,u.avatar,p.score,p.connected FROM live_players p JOIN users u ON u.id=p.user_id JOIN live_games g ON g.id=p.game_id WHERE p.game_id=? AND p.user_id<>g.host_id ORDER BY p.score DESC,u.username ASC`).all(gameId);
+
+function avatarForPlayer(userId, fallbackAvatar, username) {
+  const row = db.prepare('SELECT avatar_config FROM users WHERE id=?').get(userId);
+  let config;
+  try {
+    const raw = JSON.parse(row?.avatar_config || '{}');
+    config = {
+      character: String(raw.character || 'toon-head'),
+      outfit: String(raw.outfit || ''),
+      background: String(raw.background || ''),
+      seed: String(raw.seed || username || 'karhoot').slice(0, 80),
+      options: raw.options && typeof raw.options === 'object' && !Array.isArray(raw.options) ? raw.options : {},
+      cosmetics: Array.isArray(raw.cosmetics) ? raw.cosmetics.filter(x => typeof x === 'string').slice(0, 30) : []
+    };
+  } catch {
+    config = { character: 'toon-head', outfit: '', background: '', seed: username || 'karhoot', options: {}, cosmetics: [] };
+  }
+  const cosmetics = config.cosmetics
+    .map(slug => db.prepare(`SELECT slug,name,anchor,pos_x,pos_y,scale,rotation FROM avatar_items WHERE slug=? AND active=1 AND category='style' AND svg_content<>''`).get(slug))
+    .filter(Boolean)
+    .map(item => ({ slug:item.slug, name:item.name, anchor:item.anchor||'center', posX:Number(item.pos_x??50), posY:Number(item.pos_y??50), scale:Number(item.scale??100), rotation:Number(item.rotation??0) }));
+  return { ...config, cosmetics };
+}
+
+const publicPlayers = (gameId) => db.prepare(`SELECT p.user_id,u.username,u.avatar,p.score,p.connected FROM live_players p JOIN users u ON u.id=p.user_id JOIN live_games g ON g.id=p.game_id WHERE p.game_id=? AND p.user_id<>g.host_id ORDER BY p.score DESC,u.username ASC`).all(gameId).map(player => ({
+  ...player,
+  avatarConfig: avatarForPlayer(player.user_id, player.avatar, player.username)
+}));
 
 function questionPayload(quizId, index) {
   const q = db.prepare('SELECT id,question,points,order_index FROM questions WHERE quiz_id=? ORDER BY order_index LIMIT 1 OFFSET ?').get(quizId, index);
