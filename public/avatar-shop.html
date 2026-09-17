@@ -1,30 +1,260 @@
 <!doctype html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Avatar Studio — Karhoot</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>tailwind.config={theme:{extend:{colors:{violetx:'#7c3aed',ink:'#08070d'}}}}</script>
-<style>body{background:#08070d}.glass{background:rgba(255,255,255,.06);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.1)}.card:hover{transform:translateY(-3px);border-color:rgba(139,92,246,.7)}.card{transition:.2s}</style>
+<style>
+body{background:#08070d}.glass{background:rgba(255,255,255,.06);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.1)}
+.card{transition:.2s}.card:hover{transform:translateY(-3px);border-color:rgba(139,92,246,.7)}
+.control{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1)}
+input[type=range]{accent-color:#8b5cf6}
+</style>
 </head>
 <body class="min-h-screen text-white">
-<header class="sticky top-0 z-20 border-b border-white/10 bg-[#08070d]/85 backdrop-blur-xl"><div class="max-w-7xl mx-auto px-5 py-4 flex items-center justify-between"><a href="/student.html" class="font-black text-xl">K<span class="text-violet-400">.</span> Karhoot</a><div class="flex items-center gap-4"><span id="coins" class="font-black">🪙 0</span><a href="/student.html" class="text-sm text-white/60 hover:text-white">Retour</a></div></div></header>
+<header class="sticky top-0 z-30 border-b border-white/10 bg-[#08070d]/90 backdrop-blur-xl">
+  <div class="max-w-7xl mx-auto px-5 py-4 flex items-center justify-between gap-4">
+    <a href="/student.html" class="font-black text-xl">K<span class="text-violet-400">.</span> Karhoot</a>
+    <div class="flex items-center gap-4"><span id="coins" class="font-black">🪙 0</span><a href="/student.html" class="text-sm text-white/60 hover:text-white">Retour</a></div>
+  </div>
+</header>
+
 <main class="max-w-7xl mx-auto px-5 py-8">
-<section class="grid lg:grid-cols-[360px_1fr] gap-6 mb-8">
-<div class="glass rounded-[2rem] p-7 sticky top-24 h-fit"><p class="text-violet-300 text-xs font-black uppercase tracking-[.25em]">Avatar Studio</p><h1 class="text-4xl font-black mt-2">Crée ton identité.</h1><p class="text-white/50 mt-2">Choisis ton personnage, tes cosmétiques et ton ambiance.</p><div class="mt-6 rounded-3xl bg-gradient-to-br from-violet-600/30 via-white/5 to-black p-5"><div class="aspect-square rounded-3xl bg-white/90 flex items-center justify-center overflow-hidden"><img id="preview" class="w-full h-full object-cover" alt="Avatar"></div></div><div class="mt-5 grid grid-cols-3 gap-2"><button data-bg="" class="bg-white text-black rounded-xl py-2 text-xs font-bold" onclick="setBackground('')">Blanc</button><button data-bg="midnight" class="bg-black border border-white/20 rounded-xl py-2 text-xs font-bold" onclick="setBackground('midnight')">Noir</button><button data-bg="neon" class="bg-violet-600 rounded-xl py-2 text-xs font-bold" onclick="setBackground('neon')">Violet</button></div><button onclick="saveAvatar()" class="w-full mt-4 rounded-2xl bg-violet-600 hover:bg-violet-500 py-4 font-black">Équiper l'avatar</button><p id="message" class="text-center text-sm mt-3 min-h-5 text-white/60"></p></div>
-<div><div class="flex flex-wrap gap-2 mb-5"><button class="tab px-4 py-2 rounded-xl bg-violet-600 font-bold" data-tab="character">Personnages</button><button class="tab px-4 py-2 rounded-xl bg-white/5 font-bold" data-tab="outfit">Tenues</button><button class="tab px-4 py-2 rounded-xl bg-white/5 font-bold" data-tab="background">Ambiances</button></div><div id="grid" class="grid sm:grid-cols-2 xl:grid-cols-3 gap-4"></div></div>
-</section></main>
+  <div class="mb-8">
+    <p class="text-violet-300 text-xs font-black uppercase tracking-[.25em]">Avatar Studio</p>
+    <h1 class="text-4xl md:text-5xl font-black mt-2">Construis ton personnage.</h1>
+    <p class="text-white/50 mt-2 max-w-2xl">Chaque modification est réellement enregistrée sur ton compte. Les options disponibles changent automatiquement selon le personnage DiceBear choisi.</p>
+  </div>
+
+  <section class="grid xl:grid-cols-[390px_1fr] gap-6 items-start">
+    <aside class="glass rounded-[2rem] p-6 xl:sticky xl:top-24">
+      <div class="flex items-center justify-between mb-4"><div><p class="text-xs uppercase tracking-widest text-white/40 font-black">Aperçu</p><h2 class="text-2xl font-black">Ton avatar</h2></div><span id="saveState" class="text-xs text-white/40">Non enregistré</span></div>
+      <div id="previewFrame" class="rounded-[2rem] p-5 bg-gradient-to-br from-violet-600/30 via-white/5 to-black">
+        <div id="previewBg" class="aspect-square rounded-[1.5rem] bg-white flex items-center justify-center overflow-hidden shadow-2xl">
+          <img id="preview" class="w-full h-full object-cover" alt="Ton avatar">
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3 mt-4">
+        <label class="control rounded-2xl px-4 py-3"><span class="text-xs text-white/45 block mb-1">Nom / seed</span><input id="seed" maxlength="80" class="w-full bg-transparent outline-none font-bold" placeholder="Mon personnage"></label>
+        <label class="control rounded-2xl px-4 py-3"><span class="text-xs text-white/45 block mb-1">Fond</span><select id="background" class="w-full bg-transparent outline-none font-bold"><option value="">Blanc</option><option value="snow">Neige</option><option value="midnight">Noir</option><option value="neon">Violet</option></select></label>
+      </div>
+      <button id="save" class="w-full mt-4 rounded-2xl bg-violet-600 hover:bg-violet-500 py-4 font-black transition">Enregistrer mon personnage</button>
+      <p id="message" class="text-center text-sm mt-3 min-h-5 text-white/60"></p>
+    </aside>
+
+    <section class="space-y-6">
+      <div class="flex flex-wrap gap-2" id="tabs">
+        <button class="tab px-4 py-2 rounded-xl bg-violet-600 font-bold" data-tab="characters">Personnages</button>
+        <button class="tab px-4 py-2 rounded-xl bg-white/5 font-bold" data-tab="appearance">Apparence</button>
+        <button class="tab px-4 py-2 rounded-xl bg-white/5 font-bold" data-tab="colors">Couleurs</button>
+        <button class="tab px-4 py-2 rounded-xl bg-white/5 font-bold" data-tab="outfits">Tenues</button>
+      </div>
+
+      <div id="charactersPanel" class="panel">
+        <div class="mb-4"><h2 class="text-2xl font-black">Choisis ton personnage</h2><p class="text-white/45 text-sm">Les personnages achetés restent définitivement dans ton inventaire.</p></div>
+        <div id="characters" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+      </div>
+
+      <div id="appearancePanel" class="panel hidden">
+        <div class="mb-4"><h2 class="text-2xl font-black">Apparence</h2><p class="text-white/45 text-sm">Ces réglages viennent directement des options disponibles pour le style sélectionné.</p></div>
+        <div id="appearanceControls" class="grid md:grid-cols-2 gap-4"></div>
+      </div>
+
+      <div id="colorsPanel" class="panel hidden">
+        <div class="mb-4"><h2 class="text-2xl font-black">Couleurs</h2><p class="text-white/45 text-sm">Modifie les couleurs de peau, cheveux, vêtements et autres composants lorsqu'ils sont supportés.</p></div>
+        <div id="colorControls" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+      </div>
+
+      <div id="outfitsPanel" class="panel hidden">
+        <div class="mb-4"><h2 class="text-2xl font-black">Tenues Karhoot</h2><p class="text-white/45 text-sm">Les tenues utilisent le vrai composant vêtements de DiceBear. Elles passent automatiquement sur le personnage personnalisable.</p></div>
+        <div id="outfits" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+      </div>
+    </section>
+  </section>
+</main>
+
 <script>
-const token=localStorage.getItem('karhoot_token'); if(!token) location.href='/login.html';
-let items=[],config={character:'lorelei-default',outfit:'',background:''},coins=0,tab='character';
+const token=localStorage.getItem('karhoot_token');
+if(!token) location.href='/login.html';
 const headers={'Content-Type':'application/json',Authorization:`Bearer ${token}`};
-function dice(style,seed,background){const bg=background==='neon'?'c084fc':background==='midnight'?'111827':'ffffff';return `https://api.dicebear.com/10.x/${encodeURIComponent(style)}/svg?seed=${encodeURIComponent(seed)}&backgroundColor=${bg}&radius=28`;}
-async function load(){const r=await fetch('/api/avatars/catalog',{headers});const d=await r.json();if(!r.ok){location.href='/login.html';return}items=d.items;const me=await fetch('/api/avatars/me',{headers}).then(x=>x.json());coins=me.user.coins;config=me.config;render();}
-function render(){coinsEl.textContent='🪙 '+coins; const list=items.filter(x=>x.category===tab);grid.innerHTML=list.map(x=>{const active=config.character===x.slug||config.outfit===x.slug||config.background===x.slug;const owned=x.owned;return `<article class="card glass rounded-3xl p-4 ${active?'ring-2 ring-violet-500':''}"><div class="aspect-square rounded-2xl bg-white/90 overflow-hidden flex items-center justify-center"><img class="w-full h-full object-cover" src="${dice(x.style,x.slug,tab==='background'?x.slug:config.background)}"></div><div class="mt-4"><div class="flex justify-between gap-2"><h2 class="font-black">${x.icon} ${x.name}</h2><span class="text-xs font-black ${owned?'text-emerald-300':'text-violet-300'}">${owned?'Possédé':'🪙 '+x.price}</span></div><p class="text-xs text-white/45 mt-1">${x.description}</p><button class="w-full mt-3 py-2.5 rounded-xl ${owned?'bg-white/10 hover:bg-white/15':'bg-violet-600 hover:bg-violet-500'} font-bold text-sm" onclick="${owned?`equipLocal('${x.category}','${x.slug}')`:`buy('${x.slug}')`}">${owned?(active?'Équipé ✓':'Équiper'):'Acheter'}</button></div></article>`}).join('');preview.src=dice((items.find(x=>x.slug===config.character)||{style:'lorelei'}).style,config.character+'-'+(config.outfit||'none'),config.background);}
-function equipLocal(category,slug){if(category==='character')config.character=slug;if(category==='outfit')config.outfit=slug;if(category==='background')config.background=slug;render();}
-function setBackground(slug){config.background=slug;render();}
-async function buy(slug){const r=await fetch('/api/avatars/purchase',{method:'POST',headers,body:JSON.stringify({slug})});const d=await r.json();message.textContent=d.error||'Achat effectué !';if(r.ok){coins=d.coins;const x=items.find(i=>i.slug===slug);x.owned=true;equipLocal(x.category,x.slug)}setTimeout(()=>message.textContent='',2500)}
-async function saveAvatar(){const r=await fetch('/api/avatars/equip',{method:'POST',headers,body:JSON.stringify(config)});const d=await r.json();message.textContent=r.ok?'Avatar équipé ✨':d.error||'Erreur';if(r.ok){const u=JSON.parse(localStorage.getItem('karhoot_user')||'{}');u.avatar=d.avatar;u.avatar_config=config;u.coins=coins;localStorage.setItem('karhoot_user',JSON.stringify(u));}}
-document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;document.querySelectorAll('.tab').forEach(x=>x.className='tab px-4 py-2 rounded-xl bg-white/5 font-bold');b.className='tab px-4 py-2 rounded-xl bg-violet-600 font-bold';render()});
-const grid=document.getElementById('grid'),preview=document.getElementById('preview'),coinsEl=document.getElementById('coins'),message=document.getElementById('message');load();
-</script></body></html>
+const state={items:[],coins:0,config:{character:'lorelei-default',outfit:'',background:'',seed:'karhoot',options:{}},activeTab:'characters',optionsMeta:null};
+const $=id=>document.getElementById(id);
+const escapeHtml=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function item(slug){return state.items.find(x=>x.slug===slug)}
+function characterItem(){return item(state.config.character)||state.items.find(x=>x.category==='character')}
+function backgroundColor(){const map={neon:'#c084fc',midnight:'#111827',snow:'#f8fafc','':'#ffffff'};return map[state.config.background]||'#ffffff'}
+function avatarUrl(){
+  const character=characterItem();
+  if(!character) return '';
+  const url=new URL(`https://api.dicebear.com/10.x/${encodeURIComponent(character.style)}/svg`);
+  url.searchParams.set('seed',state.config.seed||'karhoot');
+  url.searchParams.set('backgroundColor',backgroundColor().replace('#',''));
+  url.searchParams.set('borderRadius','28');
+  for(const [key,value] of Object.entries(state.config.options||{})){
+    if(value!=='' && value!==null && value!==undefined) url.searchParams.set(key,String(value));
+  }
+  return url.toString();
+}
+function renderPreview(){
+  $('preview').src=avatarUrl();
+  $('seed').value=state.config.seed||'';
+  $('background').value=state.config.background||'';
+  $('saveState').textContent='Modifications non enregistrées';
+}
+
+async function load(){
+  const [catalogRes,meRes]=await Promise.all([fetch('/api/avatars/catalog',{headers}),fetch('/api/avatars/me',{headers})]);
+  if(!catalogRes.ok||!meRes.ok){location.href='/login.html';return}
+  const catalog=await catalogRes.json(), me=await meRes.json();
+  state.items=catalog.items; state.coins=me.user.coins; state.config={...state.config,...me.config,options:{...(me.config.options||{})}};
+  $('coins').textContent='🪙 '+state.coins;
+  renderAll();
+}
+
+function renderAll(){renderCharacters();renderOutfits();renderPreview();loadStyleOptions();}
+function renderCharacters(){
+  const list=state.items.filter(x=>x.category==='character');
+  $('characters').innerHTML=list.map(x=>{
+    const owned=x.owned, active=state.config.character===x.slug;
+    const bg=encodeURIComponent('ffffff');
+    const src=`https://api.dicebear.com/10.x/${encodeURIComponent(x.style)}/svg?seed=${encodeURIComponent(x.slug)}&backgroundColor=${bg}&borderRadius=28`;
+    return `<article class="card glass rounded-3xl p-4 ${active?'ring-2 ring-violet-500':''}">
+      <div class="aspect-square rounded-2xl bg-white overflow-hidden"><img class="w-full h-full object-cover" src="${src}" alt=""></div>
+      <div class="mt-4"><div class="flex justify-between gap-2"><h3 class="font-black">${escapeHtml(x.icon)} ${escapeHtml(x.name)}</h3><span class="text-xs font-black ${owned?'text-emerald-300':'text-violet-300'}">${owned?'Possédé':'🪙 '+x.price}</span></div>
+      <p class="text-xs text-white/45 mt-1">${escapeHtml(x.description)}</p>
+      <button class="w-full mt-3 py-2.5 rounded-xl ${owned?'bg-white/10 hover:bg-white/15':'bg-violet-600 hover:bg-violet-500'} font-bold text-sm" data-character="${escapeHtml(x.slug)}">${owned?(active?'Sélectionné ✓':'Choisir'):'Acheter'}</button></div></article>`;
+  }).join('');
+  $('characters').querySelectorAll('[data-character]').forEach(btn=>btn.onclick=()=>selectCharacter(btn.dataset.character));
+}
+
+function renderOutfits(){
+  const list=state.items.filter(x=>x.category==='outfit');
+  $('outfits').innerHTML=list.map(x=>{
+    const owned=x.owned, active=state.config.outfit===x.slug;
+    const color=x.slug==='violet-fit'?'c084fc':x.slug==='black-fit'?'111827':'f8fafc';
+    const src=`https://api.dicebear.com/10.x/avataaars/svg?seed=${encodeURIComponent(x.slug)}&backgroundColor=${color}&clothingColor=${color}&borderRadius=28`;
+    return `<article class="card glass rounded-3xl p-4 ${active?'ring-2 ring-violet-500':''}"><div class="aspect-square rounded-2xl bg-white overflow-hidden"><img class="w-full h-full object-cover" src="${src}" alt=""></div><div class="mt-4"><div class="flex justify-between gap-2"><h3 class="font-black">${escapeHtml(x.icon)} ${escapeHtml(x.name)}</h3><span class="text-xs font-black ${owned?'text-emerald-300':'text-violet-300'}">${owned?'Possédé':'🪙 '+x.price}</span></div><p class="text-xs text-white/45 mt-1">${escapeHtml(x.description)}</p><button class="w-full mt-3 py-2.5 rounded-xl ${owned?'bg-white/10 hover:bg-white/15':'bg-violet-600 hover:bg-violet-500'} font-bold text-sm" data-outfit="${escapeHtml(x.slug)}">${owned?(active?'Équipée ✓':'Équiper'):'Acheter'}</button></div></article>`;
+  }).join('');
+  $('outfits').querySelectorAll('[data-outfit]').forEach(btn=>btn.onclick=()=>selectOutfit(btn.dataset.outfit));
+}
+
+async function selectCharacter(slug){
+  const x=item(slug);
+  if(!x) return;
+  if(!x.owned){return buy(slug)}
+  state.config.character=slug;
+  if(x.style!=='avataaars') state.config.outfit='';
+  state.config.options={};
+  await loadStyleOptions(); renderCharacters();renderOutfits();renderPreview();
+}
+
+function selectOutfit(slug){
+  const x=item(slug); if(!x) return;
+  if(!x.owned) return buy(slug);
+  state.config.character='avataaars'; state.config.outfit=slug;
+  const colors={
+    'violet-fit':'#8b5cf6',
+    'black-fit':'#111827',
+    'white-fit':'#f8fafc'
+  };
+  state.config.options={...state.config.options,clothingColor:colors[slug]||'#8b5cf6'};
+  loadStyleOptions(); renderCharacters();renderOutfits();renderPreview();
+}
+
+async function buy(slug){
+  const r=await fetch('/api/avatars/purchase',{method:'POST',headers,body:JSON.stringify({slug})});
+  const d=await r.json();
+  if(!r.ok){showMessage(d.error||'Achat impossible');return}
+  state.coins=d.coins; $('coins').textContent='🪙 '+state.coins;
+  const x=item(slug); if(x)x.owned=true;
+  showMessage('Achat effectué ✨');
+  if(x.category==='outfit') selectOutfit(slug); else selectCharacter(slug);
+  renderCharacters();renderOutfits();
+}
+
+function labelFor(key){
+  const labels={hairVariant:'Coiffure',eyesVariant:'Yeux',eyebrowsVariant:'Sourcils',mouthVariant:'Bouche',facialHairVariant:'Barbe',accessoriesVariant:'Accessoires',clothingVariant:'Vêtement',topVariant:'Haut',bottomVariant:'Bas',skinColor:'Peau',hairColor:'Cheveux',clothingColor:'Vêtements',eyesColor:'Yeux',mouthColor:'Bouche',accessoriesColor:'Accessoires',backgroundColor:'Fond'};
+  return labels[key]||key.replace(/Variant$/,'').replace(/([A-Z])/g,' $1').replace(/^./,s=>s.toUpperCase());
+}
+function isColor(key,meta){return meta?.type==='color'||/Color$/.test(key)}
+function optionDefault(meta,key){
+  const current=state.config.options?.[key];
+  if(current!==undefined)return current;
+  if(meta?.type==='number')return meta.min??0;
+  if(meta?.type==='boolean')return false;
+  if(Array.isArray(meta?.values)&&meta.values.length)return meta.values[0];
+  return '';
+}
+
+async function loadStyleOptions(){
+  const character=characterItem(); if(!character)return;
+  try{
+    const r=await fetch(`https://api.dicebear.com/10.x/${encodeURIComponent(character.style)}/options.json`,{cache:'no-store'});
+    if(!r.ok)throw new Error('Options indisponibles');
+    state.optionsMeta=await r.json();
+    // Remove options no longer supported by the selected style.
+    const supported=new Set(Object.keys(state.optionsMeta||{}));
+    state.config.options=Object.fromEntries(Object.entries(state.config.options||{}).filter(([k])=>supported.has(k)));
+    renderControls();renderPreview();
+  }catch{
+    state.optionsMeta={};
+    $('appearanceControls').innerHTML='<div class="glass rounded-2xl p-5 text-white/50">Impossible de charger les options de ce style pour le moment.</div>';
+    $('colorControls').innerHTML='';
+  }
+}
+
+function renderControls(){
+  const entries=Object.entries(state.optionsMeta||{}).filter(([key])=>!['seed','backgroundColor'].includes(key));
+  const appearance=entries.filter(([key,meta])=>!isColor(key,meta));
+  const colors=entries.filter(([key,meta])=>isColor(key,meta));
+  $('appearanceControls').innerHTML=appearance.length?appearance.map(([key,meta])=>controlHtml(key,meta)).join(''):'<div class="glass rounded-2xl p-5 text-white/50">Ce personnage ne propose pas de réglage supplémentaire.</div>';
+  $('colorControls').innerHTML=colors.length?colors.map(([key,meta])=>controlHtml(key,meta)).join(''):'<div class="glass rounded-2xl p-5 text-white/50">Ce personnage ne propose pas de réglage de couleur spécifique.</div>';
+  document.querySelectorAll('[data-option]').forEach(el=>el.oninput=()=>{let value=el.value;if(el.type==='range')value=Number(value);if(el.type==='checkbox')value=el.checked;state.config.options[el.dataset.option]=value;renderPreview();});
+}
+
+function controlHtml(key,meta){
+  const label=escapeHtml(labelFor(key)), value=optionDefault(meta,key);
+  if(isColor(key,meta)){
+    const color=/^#[0-9a-fA-F]{6}$/.test(String(value))?value:'#8b5cf6';
+    return `<label class="glass rounded-2xl p-4 flex items-center justify-between gap-4"><span><b>${label}</b><small class="block text-white/35 mt-1">${escapeHtml(key)}</small></span><input type="color" data-option="${escapeHtml(key)}" value="${color}" class="w-12 h-10 rounded-xl bg-transparent cursor-pointer"></label>`;
+  }
+  if(meta?.type==='enum'&&Array.isArray(meta.values)){
+    return `<label class="glass rounded-2xl p-4"><span class="font-bold block mb-3">${label}</span><select data-option="${escapeHtml(key)}" class="w-full control rounded-xl px-3 py-2 bg-[#111018]">${meta.values.map(v=>`<option value="${escapeHtml(v)}" ${String(v)===String(value)?'selected':''}>${escapeHtml(v)}</option>`).join('')}</select></label>`;
+  }
+  if(meta?.type==='number'){
+    const min=meta.min??0,max=meta.max??100;
+    return `<label class="glass rounded-2xl p-4"><div class="flex justify-between mb-3"><span class="font-bold">${label}</span><output id="out-${escapeHtml(key)}">${escapeHtml(value)}</output></div><input type="range" data-option="${escapeHtml(key)}" min="${min}" max="${max}" value="${value}" class="w-full"></label>`;
+  }
+  if(meta?.type==='boolean'){
+    return `<label class="glass rounded-2xl p-4 flex items-center justify-between"><span class="font-bold">${label}</span><input type="checkbox" data-option="${escapeHtml(key)}" ${value?'checked':''} class="w-5 h-5 accent-violet-500"></label>`;
+  }
+  return '';
+}
+
+async function saveAvatar(){
+  $('save').disabled=true;$('save').textContent='Enregistrement…';
+  const payload={...state.config,seed:$('seed').value.trim().slice(0,80)||'karhoot',background:$('background').value};
+  const r=await fetch('/api/avatars/equip',{method:'POST',headers,body:JSON.stringify(payload)});
+  const d=await r.json();
+  $('save').disabled=false;$('save').textContent='Enregistrer mon personnage';
+  if(!r.ok){showMessage(d.error||'Configuration invalide');return}
+  state.config={...state.config,...d.config}; $('saveState').textContent='Enregistré ✓';
+  const user=JSON.parse(localStorage.getItem('karhoot_user')||'{}');
+  user.avatar=d.avatar;user.avatar_config=state.config;user.coins=state.coins;localStorage.setItem('karhoot_user',JSON.stringify(user));
+  showMessage('Personnage enregistré ✨');
+}
+
+function showMessage(text){$('message').textContent=text;setTimeout(()=>{$('message').textContent=''},3000)}
+function activateTab(tab){state.activeTab=tab;document.querySelectorAll('.tab').forEach(b=>b.className='tab px-4 py-2 rounded-xl bg-white/5 font-bold');const active=document.querySelector(`[data-tab="${tab}"]`);if(active)active.className='tab px-4 py-2 rounded-xl bg-violet-600 font-bold';document.querySelectorAll('.panel').forEach(p=>p.classList.add('hidden'));$(`${tab}Panel`).classList.remove('hidden');}
+
+document.querySelectorAll('.tab').forEach(btn=>btn.onclick=()=>activateTab(btn.dataset.tab));
+$('seed').oninput=()=>{state.config.seed=$('seed').value.slice(0,80);renderPreview()};
+$('background').onchange=()=>{state.config.background=$('background').value;renderPreview()};
+$('save').onclick=saveAvatar;
+load();
+</script>
+</body>
+</html>
