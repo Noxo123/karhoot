@@ -58,7 +58,18 @@ gameRouter.get('/:code', requireAuth, (req,res) => {
   const isPlayer = !!db.prepare('SELECT 1 FROM live_players WHERE game_id=? AND user_id=?').get(game.id,req.user.id);
   if (!isHost && !isPlayer) return res.status(403).json({error:'Accès à cette partie non autorisé'});
   game.players = publicPlayers(game.id);
-  if (game.current_question >= 0 && game.status === 'question') game.question = questionPayload(game.quiz_id, game.current_question);
+  game.player = isPlayer ? {
+    userId:req.user.id,
+    score:Number(db.prepare('SELECT score FROM live_players WHERE game_id=? AND user_id=?').get(game.id,req.user.id)?.score||0),
+    connected:Boolean(db.prepare('SELECT connected FROM live_players WHERE game_id=? AND user_id=?').get(game.id,req.user.id)?.connected)
+  } : null;
+  if (game.current_question >= 0 && game.status === 'question') {
+    game.question = questionPayload(game.quiz_id, game.current_question);
+    if (isPlayer && game.question) {
+      const answered=db.prepare('SELECT answer_id,is_correct,points,answered_at FROM live_answers WHERE game_id=? AND user_id=? AND question_id=?').get(game.id,req.user.id,game.question.id);
+      if (answered) game.player.answer={answerId:answered.answer_id,correct:Boolean(answered.is_correct),points:Number(answered.points),answeredAt:answered.answered_at};
+    }
+  }
   res.json({ game });
 });
 
@@ -68,7 +79,7 @@ gameRouter.post('/:code/start', requireAuth, requireRole('teacher','admin'), (re
   if (game.status !== 'lobby') return res.status(409).json({ error:'La partie est déjà lancée' });
   const first = questionPayload(game.quiz_id, 0);
   if (!first) return res.status(409).json({ error:'Ce quiz ne contient aucune question' });
-  db.prepare("UPDATE live_games SET status='question', current_question=0 WHERE id=?").run(game.id);
+  db.prepare("UPDATE live_games SET status='question', current_question=0, question_started_at=? WHERE id=?").run(new Date().toISOString(),game.id);
   res.json({ question:first, players:publicPlayers(game.id) });
 });
 
@@ -78,10 +89,10 @@ gameRouter.post('/:code/next', requireAuth, requireRole('teacher','admin'), (req
   const next = game.current_question + 1;
   const question = questionPayload(game.quiz_id, next);
   if (!question) {
-    db.prepare("UPDATE live_games SET status='finished' WHERE id=?").run(game.id);
+    db.prepare("UPDATE live_games SET status='finished', question_started_at=NULL WHERE id=?").run(game.id);
     return res.json({ finished:true, players:publicPlayers(game.id) });
   }
-  db.prepare("UPDATE live_games SET status='question', current_question=? WHERE id=?").run(next, game.id);
+  db.prepare("UPDATE live_games SET status='question', current_question=?, question_started_at=? WHERE id=?").run(next,new Date().toISOString(),game.id);
   res.json({ finished:false, question, players:publicPlayers(game.id) });
 });
 
@@ -95,10 +106,21 @@ gameRouter.post('/:code/end', requireAuth, requireRole('teacher','admin'), (req,
 gameRouter.post('/:code/join', requireAuth, (req,res) => {
   const game = getGame(req.params.code);
   if (!game) return res.status(404).json({ error:'Partie introuvable' });
-  if (game.status !== 'lobby') return res.status(409).json({ error:'Cette partie a déjà commencé' });
-  if (game.host_id === req.user.id) return res.json({ gameId:game.id, roomCode:game.room_code, players:publicPlayers(game.id), host:true });
-  db.prepare(`INSERT INTO live_players(game_id,user_id) VALUES(?,?) ON CONFLICT(game_id,user_id) DO UPDATE SET connected=1`).run(game.id, req.user.id);
-  res.json({ gameId:game.id, roomCode:game.room_code, players:publicPlayers(game.id) });
+  if (!['lobby','question'].includes(game.status)) return res.status(409).json({ error:'Cette partie est terminée' });
+  if (game.host_id === req.user.id) return res.json({ gameId:game.id, roomCode:game.room_code, players:publicPlayers(game.id), host:true, status:game.status });
+  db.prepare(`INSERT INTO live_players(game_id,user_id,connected) VALUES(?,?,1) ON CONFLICT(game_id,user_id) DO UPDATE SET connected=1`).run(game.id, req.user.id);
+  const response={ gameId:game.id, roomCode:game.room_code, players:publicPlayers(game.id), status:game.status };
+  if(game.status==='question'){
+    const q=questionPayload(game.quiz_id,game.current_question);
+    response.question=q;
+    const row=db.prepare('SELECT score FROM live_players WHERE game_id=? AND user_id=?').get(game.id,req.user.id);
+    response.score=Number(row?.score||0);
+    const a=q&&db.prepare('SELECT answer_id,is_correct,points,answered_at FROM live_answers WHERE game_id=? AND user_id=? AND question_id=?').get(game.id,req.user.id,q.id);
+    if(a)response.answer={answerId:a.answer_id,correct:Boolean(a.is_correct),points:Number(a.points),answeredAt:a.answered_at};
+  }
+  return res.json(response);
+  db.prepare(`INSERT INTO live_players(game_id,user_id,connected) VALUES(?,?,1) ON CONFLICT(game_id,user_id) DO UPDATE SET connected=1`).run(game.id, req.user.id);
+  res.json({ gameId:game.id, roomCode:game.room_code, players:publicPlayers(game.id), status:game.status });
 });
 
 gameRouter.post('/:code/answer', requireAuth, (req,res) => {
