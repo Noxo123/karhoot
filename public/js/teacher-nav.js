@@ -12,9 +12,9 @@
   ];
   const current = location.pathname.replace(/\/$/,'') || '/';
   const nav = document.createElement('nav');
-  nav.className = 'teacher-global-nav sticky top-0 z-50 border-b border-white/10 bg-slate-950/95 backdrop-blur-xl shadow-lg';
+  nav.className = 'teacher-global-nav sticky top-0 z-50 border-b border-white/10 bg-[#080912]/85 backdrop-blur-xl shadow-lg';
   nav.innerHTML = `<div class="max-w-7xl mx-auto px-4 py-3 flex items-center gap-2 overflow-x-auto">
-    <a href="/teacher.html" class="shrink-0 font-black text-lg mr-2">🎮 Karhoot</a>
+    <a href="/teacher.html" class="shrink-0 kh-brand mr-2"><span class="kh-brand-mark" style="width:32px;height:32px;border-radius:10px"><img src="/brand-mark.svg" alt="" aria-hidden="true"></span><span>Karhoot</span></a>
     <div class="h-7 w-px bg-white/10 shrink-0"></div>
     ${links.map(([href,icon,label]) => {
       const active = current === href;
