@@ -24,11 +24,15 @@ export function registerRealtime(io){
   io.on('connection',socket=>{
     socket.on('join-room',({roomCode}={})=>{
       const user=socket.data.user;
-      const game=db.prepare('SELECT id,quiz_id,host_id,status,current_question FROM live_games WHERE room_code=?').get(String(roomCode||'').toUpperCase());
+      const code=String(roomCode||'').trim().toUpperCase();
+      if(!/^[A-Z0-9]{6}$/.test(code))return socket.emit('room-error','Code de partie invalide');
+      const game=db.prepare('SELECT id,quiz_id,host_id,status,current_question FROM live_games WHERE room_code=?').get(code);
       if(!game)return socket.emit('room-error','Partie introuvable');
       if(!['lobby','question'].includes(game.status))return socket.emit('room-error','Cette partie est terminée');
       if(game.host_id!==user.id){
-        db.prepare('INSERT INTO live_players(game_id,user_id) VALUES(?,?) ON CONFLICT(game_id,user_id) DO UPDATE SET connected=1').run(game.id,user.id);
+        const player=db.prepare('SELECT 1 FROM live_players WHERE game_id=? AND user_id=?').get(game.id,user.id);
+        if(!player)return socket.emit('room-error','Tu dois rejoindre la partie avant de te connecter.');
+        db.prepare('UPDATE live_players SET connected=1 WHERE game_id=? AND user_id=?').run(game.id,user.id);
       }
       socket.join(`game:${game.id}`);socket.data.gameId=game.id;
       io.to(`game:${game.id}`).emit('lobby-update',lobbyPlayers(game.id));
@@ -36,7 +40,7 @@ export function registerRealtime(io){
     });
     socket.on('game-state',({roomCode,question,finished}={})=>{
       const user=socket.data.user;
-      const game=db.prepare('SELECT id,host_id FROM live_games WHERE room_code=?').get(String(roomCode||'').toUpperCase());
+      const game=db.prepare('SELECT id,host_id FROM live_games WHERE room_code=?').get(String(roomCode||'').trim().toUpperCase());
       if(!game || game.host_id!==user.id || !['teacher','admin'].includes(user.role))return socket.emit('room-error','Action hôte non autorisée');
       if(finished)io.to(`game:${game.id}`).emit('game-finished');else if(question)io.to(`game:${game.id}`).emit('game-question',question);
     });
