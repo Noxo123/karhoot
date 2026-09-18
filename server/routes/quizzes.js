@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { db } from '../database.js';
 import { requireAuth, requireRole } from '../auth.js';
 export const quizRouter = Router();
-const schema = z.object({ title:z.string().trim().min(2).max(100), description:z.string().trim().max(500).optional(), questions:z.array(z.object({ question:z.string().trim().min(1).max(1000), points:z.coerce.number().int().min(1).max(1000).default(100), answers:z.array(z.object({ answer:z.string().trim().min(1).max(500), isCorrect:z.boolean() })).min(2).max(8) })).min(1).max(100) });
+const schema = z.object({ title:z.string().trim().min(2).max(100), description:z.string().trim().max(500).optional(), questions:z.array(z.object({ question:z.string().trim().min(1).max(1000), points:z.coerce.number().int().min(1).max(1000).default(100), answers:z.array(z.object({ answer:z.string().trim().min(1).max(500), isCorrect:z.boolean() })).min(2).max(8).superRefine((answers,ctx)=>{if(answers.filter(a=>a.isCorrect).length!==1)ctx.addIssue({code:z.ZodIssueCode.custom,message:'Une seule bonne réponse est autorisée.'})}) })).min(1).max(100) });
 quizRouter.get('/', requireAuth, (req,res) => res.json({ quizzes: db.prepare('SELECT id,title,description,visibility,created_at FROM quizzes WHERE author_id=? ORDER BY id DESC').all(req.user.id) }));
 quizRouter.get('/:id', requireAuth, (req,res) => {
   const quiz=db.prepare('SELECT id,title,description,visibility,author_id FROM quizzes WHERE id=?').get(req.params.id); if(!quiz)return res.status(404).json({error:'Quiz introuvable'});
