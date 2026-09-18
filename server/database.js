@@ -40,6 +40,7 @@ export function initDatabase() {
     CREATE TABLE IF NOT EXISTS user_avatar_items (user_id INTEGER NOT NULL, item_id INTEGER NOT NULL, purchased_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY(user_id,item_id), FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE);
   `);
   addColumn("ALTER TABLE users ADD COLUMN avatar_config TEXT NOT NULL DEFAULT '{}'");
+  addColumn("ALTER TABLE live_games ADD COLUMN question_started_at TEXT");
   addColumn("ALTER TABLE users ADD COLUMN coins INTEGER NOT NULL DEFAULT 100");
   addColumn("ALTER TABLE avatar_items ADD COLUMN svg_content TEXT NOT NULL DEFAULT ''");
   addColumn("ALTER TABLE avatar_items ADD COLUMN creator_id INTEGER");
