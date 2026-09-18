@@ -38,7 +38,9 @@ const publicPlayers = (gameId) => db.prepare(`SELECT p.user_id,u.username,u.avat
 function questionPayload(quizId, index) {
   const q = db.prepare('SELECT id,question,points,order_index FROM questions WHERE quiz_id=? ORDER BY order_index LIMIT 1 OFFSET ?').get(quizId, index);
   if (!q) return null;
-  q.answers = db.prepare('SELECT id,answer,order_index FROM answers WHERE question_id=? ORDER BY order_index').all(q.id);
+  const answers=db.prepare('SELECT id,answer,order_index,is_correct FROM answers WHERE question_id=? ORDER BY order_index').all(q.id);
+  const correct=answers.find(a=>a.is_correct);
+  q.answers=answers.length<=4?answers:([...answers.slice(0,3),...(correct&&!answers.slice(0,4).some(a=>a.id===correct.id)?[correct]:[])]).slice(0,4).map(({id,answer,order_index})=>({id,answer,order_index}));
   return q;
 }
 
