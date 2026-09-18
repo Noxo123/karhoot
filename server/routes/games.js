@@ -54,6 +54,9 @@ gameRouter.post('/', requireAuth, requireRole('teacher','admin'), (req,res) => {
 gameRouter.get('/:code', requireAuth, (req,res) => {
   const game = getGame(req.params.code);
   if (!game) return res.status(404).json({ error:'Partie introuvable' });
+  const isHost = game.host_id === req.user.id;
+  const isPlayer = !!db.prepare('SELECT 1 FROM live_players WHERE game_id=? AND user_id=?').get(game.id,req.user.id);
+  if (!isHost && !isPlayer) return res.status(403).json({error:'Accès à cette partie non autorisé'});
   game.players = publicPlayers(game.id);
   if (game.current_question >= 0 && game.status === 'question') game.question = questionPayload(game.quiz_id, game.current_question);
   res.json({ game });
@@ -108,8 +111,12 @@ gameRouter.post('/:code/answer', requireAuth, (req,res) => {
   const answer = db.prepare('SELECT id,is_correct FROM answers WHERE id=? AND question_id=?').get(req.body?.answerId, q?.id);
   if (!q || !answer) return res.status(400).json({ error:'Réponse invalide' });
   const correct = Boolean(answer.is_correct);
-  const speed = Math.max(0, Math.min(100, Number(req.body?.speedBonus || 0)));
-  const points = correct ? q.points + Math.round(q.points * speed / 100) : 0;
-  db.prepare('UPDATE live_players SET score=score+? WHERE game_id=? AND user_id=?').run(points, game.id, req.user.id);
-  res.json({ correct, points, players:publicPlayers(game.id) });
+  const existing=db.prepare('SELECT points,is_correct FROM live_answers WHERE game_id=? AND user_id=? AND question_id=?').get(game.id,req.user.id,q.id);
+  if(existing) return res.status(409).json({error:'Réponse déjà enregistrée pour cette question',correct:Boolean(existing.is_correct),points:existing.points,players:publicPlayers(game.id)});
+  const points=correct?q.points:0;
+  db.transaction(()=>{
+    db.prepare('INSERT INTO live_answers(game_id,user_id,question_id,answer_id,is_correct,points) VALUES(?,?,?,?,?,?)').run(game.id,req.user.id,q.id,answer.id,correct?1:0,points);
+    db.prepare('UPDATE live_players SET score=score+? WHERE game_id=? AND user_id=?').run(points,game.id,req.user.id);
+  })();
+  res.json({correct,points,players:publicPlayers(game.id)});
 });
