@@ -79,7 +79,9 @@ gameRouter.post('/:code/start', requireAuth, requireRole('teacher','admin'), (re
   if (game.status !== 'lobby') return res.status(409).json({ error:'La partie est déjà lancée' });
   const first = questionPayload(game.quiz_id, 0);
   if (!first) return res.status(409).json({ error:'Ce quiz ne contient aucune question' });
-  db.prepare("UPDATE live_games SET status='question', current_question=0, question_started_at=? WHERE id=?").run(new Date().toISOString(),game.id);
+  const startedAt=new Date().toISOString();
+  db.prepare("UPDATE live_games SET status='question', current_question=0, question_started_at=? WHERE id=?").run(startedAt,game.id);
+  first.startedAt=startedAt;
   res.json({ question:first, players:publicPlayers(game.id) });
 });
 
@@ -92,7 +94,9 @@ gameRouter.post('/:code/next', requireAuth, requireRole('teacher','admin'), (req
     db.prepare("UPDATE live_games SET status='finished', question_started_at=NULL WHERE id=?").run(game.id);
     return res.json({ finished:true, players:publicPlayers(game.id) });
   }
-  db.prepare("UPDATE live_games SET status='question', current_question=?, question_started_at=? WHERE id=?").run(next,new Date().toISOString(),game.id);
+  const startedAt=new Date().toISOString();
+  db.prepare("UPDATE live_games SET status='question', current_question=?, question_started_at=? WHERE id=?").run(next,startedAt,game.id);
+  question.startedAt=startedAt;
   res.json({ finished:false, question, players:publicPlayers(game.id) });
 });
 
