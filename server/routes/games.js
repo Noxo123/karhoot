@@ -64,6 +64,7 @@ gameRouter.get('/:code', requireAuth, (req,res) => {
     connected:Boolean(db.prepare('SELECT connected FROM live_players WHERE game_id=? AND user_id=?').get(game.id,req.user.id)?.connected)
   } : null;
   if (game.current_question >= 0 && game.status === 'question') {
+    game.questionStartedAt=game.question_started_at||null;
     game.question = questionPayload(game.quiz_id, game.current_question);
     if (isPlayer && game.question) {
       const answered=db.prepare('SELECT answer_id,is_correct,points,answered_at FROM live_answers WHERE game_id=? AND user_id=? AND question_id=?').get(game.id,req.user.id,game.question.id);
@@ -116,6 +117,7 @@ gameRouter.post('/:code/join', requireAuth, (req,res) => {
   const response={ gameId:game.id, roomCode:game.room_code, players:publicPlayers(game.id), status:game.status };
   if(game.status==='question'){
     const q=questionPayload(game.quiz_id,game.current_question);
+    if(q)q.startedAt=game.question_started_at||null;
     response.question=q;
     const row=db.prepare('SELECT score FROM live_players WHERE game_id=? AND user_id=?').get(game.id,req.user.id);
     response.score=Number(row?.score||0);
