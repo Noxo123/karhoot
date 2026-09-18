@@ -66,8 +66,8 @@ gameRouter.get('/:code', requireAuth, (req,res) => {
   if (game.current_question >= 0 && game.status === 'question') {
     game.questionStartedAt=game.question_started_at||null;
     game.question = questionPayload(game.quiz_id, game.current_question);
-    game.question.startedAt=game.question_started_at||null;
-    game.answeredCount=Number(db.prepare('SELECT COUNT(*) count FROM live_answers WHERE game_id=? AND question_id=?').get(game.id,game.question.id)?.count||0);
+    if (game.question) game.question.startedAt=game.question_started_at||null;
+    game.answeredCount=game.question?Number(db.prepare('SELECT COUNT(*) count FROM live_answers WHERE game_id=? AND question_id=?').get(game.id,game.question.id)?.count||0):0;
     if (isHost && game.question) {
       game.question.answers=db.prepare('SELECT id,answer,is_correct,order_index FROM answers WHERE question_id=? ORDER BY order_index').all(game.question.id);
     }
