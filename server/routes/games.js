@@ -58,6 +58,7 @@ gameRouter.get('/:code', requireAuth, (req,res) => {
   const isPlayer = !!db.prepare('SELECT 1 FROM live_players WHERE game_id=? AND user_id=?').get(game.id,req.user.id);
   if (!isHost && !isPlayer) return res.status(403).json({error:'Accès à cette partie non autorisé'});
   game.players = publicPlayers(game.id);
+  game.questionCount=Number(db.prepare('SELECT COUNT(*) count FROM questions WHERE quiz_id=?').get(game.quiz_id)?.count||0);
   game.player = isPlayer ? {
     userId:req.user.id,
     score:Number(db.prepare('SELECT score FROM live_players WHERE game_id=? AND user_id=?').get(game.id,req.user.id)?.score||0),
