@@ -11,7 +11,7 @@ function avatarForPlayer(userId, username){
 }
 
 function lobbyPlayers(gameId){return db.prepare('SELECT p.user_id,u.username,u.avatar,p.score,p.connected FROM live_players p JOIN users u ON u.id=p.user_id JOIN live_games g ON g.id=p.game_id WHERE p.game_id=? AND p.user_id<>g.host_id ORDER BY p.score DESC,u.username ASC').all(gameId).map(player=>({...player,avatarConfig:avatarForPlayer(player.user_id,player.username)}))}
-function currentQuestion(game){const q=db.prepare('SELECT id,question,points,order_index FROM questions WHERE quiz_id=? ORDER BY order_index LIMIT 1 OFFSET ?').get(game.quiz_id,game.current_question);if(!q)return null;q.answers=db.prepare('SELECT id,answer,order_index FROM answers WHERE question_id=? ORDER BY order_index').all(q.id);return q}
+function currentQuestion(game){const q=db.prepare('SELECT id,question,points,order_index FROM questions WHERE quiz_id=? ORDER BY order_index LIMIT 1 OFFSET ?').get(game.quiz_id,game.current_question);if(!q)return null;q.answers=db.prepare('SELECT id,answer,order_index FROM answers WHERE question_id=? ORDER BY order_index').all(q.id);q.startedAt=game.question_started_at||null;return q}
 
 export function registerRealtime(io){
   io.use((socket,next)=>{
