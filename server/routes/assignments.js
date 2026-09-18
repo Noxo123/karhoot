@@ -4,7 +4,7 @@ import { db } from '../database.js';
 import { requireAuth, requireRole } from '../auth.js';
 
 export const assignmentRouter = Router();
-const schema = z.object({ quizId:z.coerce.number().int().positive(), classId:z.coerce.number().int().positive(), dueDate:z.string().nullable().optional(), settings:z.record(z.string(), z.any()).optional() });
+const schema = z.object({ quizId:z.coerce.number().int().positive(), classId:z.coerce.number().int().positive(), dueDate:z.string().datetime({offset:true}).nullable().optional(), settings:z.record(z.string(), z.any()).optional() });
 
 assignmentRouter.get('/', requireAuth, (req,res) => {
   const rows = req.user.role === 'student'
@@ -26,13 +26,14 @@ assignmentRouter.post('/', requireAuth, requireRole('teacher','admin'), (req,res
 assignmentRouter.post('/:id/submit', requireAuth, requireRole('student'), (req,res) => {
   const assignment=db.prepare('SELECT a.*,q.id quiz_id FROM assignments a JOIN quizzes q ON q.id=a.quiz_id JOIN class_members cm ON cm.class_id=a.class_id WHERE a.id=? AND cm.user_id=?').get(req.params.id,req.user.id);
   if(!assignment)return res.status(404).json({error:'Devoir introuvable'});
-  const answers=Array.isArray(req.body?.answers)?req.body.answers:[];
+  const answers=Array.isArray(req.body?.answers)?req.body.answers.slice(0,100):[];
+  if(db.prepare('SELECT 1 FROM submissions WHERE assignment_id=? AND student_id=?').get(assignment.id,req.user.id))return res.status(409).json({error:'Devoir déjà envoyé'});
   const questions=db.prepare('SELECT id FROM questions WHERE quiz_id=? ORDER BY order_index').all(assignment.quiz_id);
   let score=0;
   const tx=db.transaction(()=>{
     const sub=db.prepare('INSERT INTO submissions(assignment_id,student_id) VALUES(?,?)').run(assignment.id,req.user.id);
     const insert=db.prepare('INSERT INTO submission_answers(submission_id,question_id,answer_id,is_correct,response_time_ms) VALUES(?,?,?,?,?)');
-    for(const q of questions){const item=answers.find(a=>Number(a.questionId)===q.id);const aid=item?.answerId ? Number(item.answerId):null;const ok=aid ? db.prepare('SELECT is_correct FROM answers WHERE id=? AND question_id=?').get(aid,q.id)?.is_correct===1:false;if(ok)score+=db.prepare('SELECT points FROM questions WHERE id=?').get(q.id).points;insert.run(sub.lastInsertRowid,q.id,aid,ok?1:0,Math.max(0,Number(item?.responseTimeMs||0)));}
+    for(const q of questions){const item=answers.find(a=>Number(a.questionId)===q.id);const aid=item?.answerId ? Number(item.answerId):null;const ok=aid ? db.prepare('SELECT is_correct FROM answers WHERE id=? AND question_id=?').get(aid,q.id)?.is_correct===1:false;if(ok)score+=db.prepare('SELECT points FROM questions WHERE id=?').get(q.id).points;insert.run(sub.lastInsertRowid,q.id,aid,ok?1:0,Math.min(86400000,Number.isFinite(Number(item?.responseTimeMs))?Math.max(0,Number(item.responseTimeMs)):0));}
     db.prepare('UPDATE submissions SET score=?,completed_at=CURRENT_TIMESTAMP WHERE id=?').run(score,sub.lastInsertRowid);
     return Number(sub.lastInsertRowid);
   });
