@@ -99,7 +99,7 @@ gameRouter.post('/:code/next', requireAuth, requireRole('teacher','admin'), (req
 gameRouter.post('/:code/end', requireAuth, requireRole('teacher','admin'), (req,res) => {
   const game = getGame(req.params.code);
   if (!game || game.host_id !== req.user.id) return res.status(404).json({ error:'Partie introuvable' });
-  db.prepare("UPDATE live_games SET status='finished' WHERE id=?").run(game.id);
+  db.prepare("UPDATE live_games SET status='finished', question_started_at=NULL WHERE id=?").run(game.id);
   res.json({ finished:true, players:publicPlayers(game.id) });
 });
 
@@ -119,8 +119,6 @@ gameRouter.post('/:code/join', requireAuth, (req,res) => {
     if(a)response.answer={answerId:a.answer_id,correct:Boolean(a.is_correct),points:Number(a.points),answeredAt:a.answered_at};
   }
   return res.json(response);
-  db.prepare(`INSERT INTO live_players(game_id,user_id,connected) VALUES(?,?,1) ON CONFLICT(game_id,user_id) DO UPDATE SET connected=1`).run(game.id, req.user.id);
-  res.json({ gameId:game.id, roomCode:game.room_code, players:publicPlayers(game.id), status:game.status });
 });
 
 gameRouter.post('/:code/answer', requireAuth, (req,res) => {
